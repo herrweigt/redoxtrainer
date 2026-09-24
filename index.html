@@ -168,6 +168,39 @@ details.sheet ul{margin:.5rem 0 .3rem;padding-left:1.2rem}
   .eqrow{grid-template-columns:1fr}
   .arrow{justify-self:center;transform:rotate(90deg);line-height:1}
 }
+.coefsel{-webkit-appearance:none;appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;font-weight:700;font-size:1rem;padding:.15rem .45rem;min-width:2.3rem;text-align:center;text-align-last:center;font-variant-numeric:tabular-nums;cursor:pointer;line-height:1.3}
+.coefsel.one{color:var(--muted);font-weight:400}
+.coefsel:hover{border-color:var(--ink)}
+.term{padding:.15rem .25rem}
+.oxgrid{display:grid;gap:.6rem;margin-bottom:.4rem}
+.oxrow{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.6rem .8rem;display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .8rem}
+.oxrow .t{font-weight:700;flex-basis:100%}
+.oxrow .pair{display:inline-flex;align-items:center;gap:.35rem}
+.oxrow .sp{font-size:1.15rem}
+.oxrow .ar{color:var(--muted);font-size:1.3rem}
+.oxsel{-webkit-appearance:none;appearance:none;border:2px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:.25rem .5rem;font-weight:700;font-size:1.05rem;min-width:3.8rem;text-align:center;text-align-last:center;cursor:pointer}
+.oxsel:disabled{cursor:default;opacity:1}
+.oxsel.missing{outline:3px solid var(--e);outline-offset:2px;background:var(--e-soft)}
+.medium{display:inline-block;margin:1.1rem 0 0;padding:.15rem .75rem;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-weight:700;font-size:.9rem}
+.medium + .ctx{margin-top:.5rem}
+/* Pfeile am Koeffizienten */
+.term .stepper{display:inline-flex;flex-direction:column;gap:1px}
+.arr{border:0;background:transparent;color:var(--muted);width:1.45rem;height:.95rem;display:grid;place-items:center;padding:0;border-radius:4px;touch-action:none;cursor:pointer;-webkit-user-select:none;user-select:none}
+.arr:hover{background:var(--line);color:var(--ink)}
+.arr.off{opacity:.25;cursor:default;background:transparent}
+@media (pointer:coarse){.arr{width:1.9rem;height:1.3rem}}
+.term .coef{min-width:1.4em;border-radius:4px}
+/* Aufgabenkarte */
+.taskcard{margin:1.3rem 0 .6rem;background:var(--panel);border:2px solid var(--ink);border-radius:16px;padding:1rem 1.2rem 1.1rem;box-shadow:5px 5px 0 var(--ink)}
+.tc-top{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between}
+.tc-label{font-size:.9rem;color:var(--muted);font-weight:700}
+.taskcard .medium{margin:0}
+.tc-title{font-size:clamp(1.45rem,4.6vw,2rem);font-weight:800;margin:.35rem 0 .2rem}
+.tc-formula{font-size:clamp(1.2rem,3.8vw,1.5rem);margin:.4rem 0 .2rem;font-weight:700;letter-spacing:.01em}
+.tc-arrow{color:var(--muted);font-weight:400;margin:0 .15em}
+.tc-text{margin:.5rem 0 0;font-size:1.08rem;max-width:42em}
+.lab.proton{margin-bottom:.2rem}
+.lab.proton button{padding:.45rem 1rem;font-size:1rem}
 </style>
 </head>
 <body>
@@ -175,21 +208,30 @@ details.sheet ul{margin:.5rem 0 .3rem;padding-left:1.2rem}
 
 <script id="logic">
 // ---------- Teilchen & Chemie ----------
+function splitCharge(key){
+  if(key.indexOf('^')>=0){
+    const i=key.indexOf('^'),b=key.slice(0,i),m=key.slice(i+1).match(/^(\d*)([+-])$/);
+    return {body:b,q:(m[1]?parseInt(m[1],10):1)*(m[2]==='+'?1:-1),ch:(m[1]||'')+(m[2]==='+'?'+':'−')};
+  }
+  const m=key.match(/^(.*?)(\d*)([+-])$/);
+  if(m) return {body:m[1],q:(m[2]?parseInt(m[2],10):1)*(m[3]==='+'?1:-1),ch:(m[2]||'')+(m[3]==='+'?'+':'−')};
+  return {body:key,q:0,ch:''};
+}
+function countEl(body){
+  let s=body,prev;
+  do{prev=s;s=s.replace(/\(([^()]*)\)(\d*)/g,(_,inner,n)=>inner.repeat(n?parseInt(n,10):1));}while(s!==prev);
+  const el={};
+  s.replace(/([A-Z][a-z]?)(\d*)/g,(_,x,n)=>{el[x]=(el[x]||0)+(n?parseInt(n,10):1);return '';});
+  return el;
+}
 function parseSp(key){
   if(key==='e') return {el:{},q:-1};
-  const m=key.match(/^(.*?)(\d*)([+-])$/);
-  let body=key,q=0;
-  if(m){body=m[1];q=(m[2]?parseInt(m[2],10):1)*(m[3]==='+'?1:-1);}
-  const el={};
-  body.replace(/([A-Z][a-z]?)(\d*)/g,(_,s,n)=>{el[s]=(el[s]||0)+(n?parseInt(n,10):1);return '';});
-  return {el,q};
+  const s=splitCharge(key);return {el:countEl(s.body),q:s.q};
 }
 function fmt(key){
   if(key==='e') return 'e<sup>−</sup>';
-  const m=key.match(/^(.*?)(\d*)([+-])$/);
-  let body=key,ch='';
-  if(m){body=m[1];ch=(m[2]||'')+(m[3]==='+'?'+':'−');}
-  return body.replace(/(\d+)/g,'<sub>$1</sub>')+(ch?'<sup>'+ch+'</sup>':'');
+  const s=splitCharge(key);
+  return s.body.replace(/(\d+)/g,'<sub>$1</sub>')+(s.ch?'<sup>'+s.ch+'</sup>':'');
 }
 const gcd=(a,b)=>b?gcd(b,a%b):a;
 const lcm=(a,b)=>a/gcd(a,b)*b;
@@ -233,7 +275,57 @@ function tally(E){
   return res;
 }
 
-// ---------- Aufgaben ----------
+// ---------- Klasse 10: saure/basische Lösung ----------
+function oxnum(sp,x){
+  const p=parseSp(sp);let rest=0;
+  for(const [e,n] of Object.entries(p.el)){if(e===x)continue;rest+=n*(e==='O'?-2:e==='H'?1:0);}
+  return (p.q-rest)/p.el[x];
+}
+function roman(n){if(n===0)return '0';return (n>0?'+':'−')+['','I','II','III','IV','V','VI','VII','VIII'][Math.abs(n)];}
+function addTo(E,s,k,n){E[s][k]=(E[s][k]||0)+n;}
+function netify(E){
+  for(const k of Object.keys(E.L)) if(E.R[k]){const m=Math.min(E.L[k],E.R[k]);E.L[k]-=m;E.R[k]-=m;}
+  for(const s of ['L','R']) for(const k of Object.keys(E[s])) if(!E[s][k]) delete E[s][k];
+  return E;
+}
+function halfAB(R,P,x,med,pk){
+  pk=pk||'H3O^+';
+  const cR=parseSp(R).el[x],cP=parseSp(P).el[x],g=gcd(cR,cP),a=cP/g,b=cR/g;
+  const d=a*cR*(oxnum(P,x)-oxnum(R,x));
+  const E={L:{[R]:a},R:{[P]:b}};
+  if(d>0) E.R.e=d; else if(d<0) E.L.e=-d;
+  let t=tally(E);const dq=t.R.q-t.L.q;
+  if(med==='acid'){if(dq>0)addTo(E,'L',pk,dq);else if(dq<0)addTo(E,'R',pk,-dq);}
+  else{if(dq>0)addTo(E,'R','OH^-',dq);else if(dq<0)addTo(E,'L','OH^-',-dq);}
+  t=tally(E);const dO=(t.R.el.O||0)-(t.L.el.O||0);
+  if(dO>0)addTo(E,'L','H2O',dO);else if(dO<0)addTo(E,'R','H2O',-dO);
+  const F=reduceEq(netify(E));
+  return {eq:F,n:F.L.e||F.R.e};
+}
+function solve10(rx,pk){
+  const o=halfAB(rx.ox.R,rx.ox.P,rx.ox.x,rx.med,pk),r=halfAB(rx.red.R,rx.red.P,rx.red.x,rx.med,pk);
+  const L=lcm(o.n,r.n),fo=L/o.n,fr=L/r.n,G={L:{},R:{}};
+  for(const [E,f] of [[o.eq,fo],[r.eq,fr]]) for(const s of ['L','R']) for(const [k,c] of Object.entries(E[s])) addTo(G,s,k,c*f);
+  return {ox:o.eq,red:r.eq,nOx:o.n,nRed:r.n,L,fo,fr,forms:[reduceEq(netify(G))],
+    oxn:{oxR:oxnum(rx.ox.R,rx.ox.x),oxP:oxnum(rx.ox.P,rx.ox.x),redR:oxnum(rx.red.R,rx.red.x),redP:oxnum(rx.red.P,rx.red.x)}};
+}
+const MNO4={R:'MnO4^-',P:'Mn2+',x:'Mn'},MNO4B={R:'MnO4^-',P:'MnO2',x:'Mn'};
+const REACTIONS10=[
+  {id:'mn-fe',lvl:1,med:'acid',red:MNO4,ox:{R:'Fe2+',P:'Fe3+',x:'Fe'},text:'Violette Kaliumpermanganat-Lösung wird in schwefelsaure Eisen(II)-sulfat-Lösung getropft und entfärbt sich. Es entstehen Mangan(II)- und Eisen(III)-Ionen.'},
+  {id:'mn-ox',lvl:1,med:'acid',red:MNO4,ox:{R:'C2O4^2-',P:'CO2',x:'C'},text:'Oxalat-Ionen entfärben saure Permanganat-Lösung, dabei entsteht Kohlenstoffdioxid. Diese Reaktion wird bei Titrationen genutzt.'},
+  {id:'mn-h2o2',lvl:1,med:'acid',red:MNO4,ox:{R:'H2O2',P:'O2',x:'O'},text:'Saure Permanganat-Lösung wird mit Wasserstoffperoxid versetzt. Die Lösung entfärbt sich, und es perlt Sauerstoff.'},
+  {id:'cr-i',lvl:1,med:'acid',red:{R:'Cr2O7^2-',P:'Cr3+',x:'Cr'},ox:{R:'I-',P:'I2',x:'I'},text:'Orange Dichromat-Lösung oxidiert in saurer Lösung Iodid-Ionen zu Iod. Es entstehen grüne Chrom(III)-Ionen.'},
+  {id:'cu-no3',lvl:1,med:'acid',ox:{R:'Cu',P:'Cu2+',x:'Cu'},red:{R:'NO3^-',P:'NO',x:'N'},text:'Kupfer löst sich in verdünnter Salpetersäure. Dabei entstehen Kupfer(II)-Ionen und farbloses Stickstoffmonooxid NO.'},
+  {id:'h2o2-i',lvl:1,med:'acid',red:{R:'H2O2',P:'H2O',x:'O'},ox:{R:'I-',P:'I2',x:'I'},text:'Wasserstoffperoxid oxidiert Iodid-Ionen in saurer Lösung zu Iod. Die Lösung färbt sich braun.'},
+  {id:'mn-so3',lvl:1,med:'acid',red:MNO4,ox:{R:'SO3^2-',P:'SO4^2-',x:'S'},text:'Sulfit-Ionen werden von saurer Permanganat-Lösung zu Sulfat-Ionen oxidiert. Es entstehen Mangan(II)-Ionen.'},
+  {id:'mn-so3-b',lvl:2,med:'base',red:MNO4B,ox:{R:'SO3^2-',P:'SO4^2-',x:'S'},text:'In basischer Lösung oxidiert Permanganat Sulfit-Ionen zu Sulfat-Ionen. Dabei fällt brauner Braunstein MnO₂ aus.'},
+  {id:'cl-dis',lvl:2,med:'base',ox:{R:'Cl2',P:'ClO^-',x:'Cl'},red:{R:'Cl2',P:'Cl-',x:'Cl'},text:'Chlor wird in Natronlauge eingeleitet. Es entsteht Bleichlauge mit Hypochlorit-Ionen ClO⁻ und Chlorid-Ionen. Chlor wird dabei gleichzeitig oxidiert und reduziert.'},
+  {id:'fe-oh',lvl:2,med:'base',ox:{R:'Fe(OH)2',P:'Fe(OH)3',x:'Fe'},red:{R:'O2',P:'OH^-',x:'O'},text:'Grünliches Eisen(II)-hydroxid färbt sich an der Luft durch Sauerstoff rotbraun: Es entsteht Eisen(III)-hydroxid. So beginnt Rost.'},
+  {id:'mn-h2o2-b',lvl:2,med:'base',red:MNO4B,ox:{R:'H2O2',P:'O2',x:'O'},text:'Wasserstoffperoxid reagiert mit Permanganat in basischer Lösung. Es perlt Sauerstoff, und Braunstein MnO₂ fällt aus.'},
+  {id:'mn-i-b',lvl:2,med:'base',red:MNO4B,ox:{R:'I-',P:'IO3^-',x:'I'},text:'In basischer Lösung oxidiert Permanganat Iodid-Ionen bis zu Iodat-Ionen IO₃⁻. Braunstein MnO₂ fällt aus.'},
+  {id:'clo-i',lvl:2,med:'base',red:{R:'ClO^-',P:'Cl-',x:'Cl'},ox:{R:'I-',P:'I2',x:'I'},text:'Hypochlorit-Ionen aus Chlorreiniger setzen in basischer Lösung aus Iodid-Ionen Iod frei. Es entstehen Chlorid-Ionen.'}
+];
+
 const REACTIONS=[
   // Stufe 1
   {id:'zn-cu',lvl:1,m:'Zn',mP:'Zn2+',o:'Cu2+',oP:'Cu',text:'Ein Zinkblech wird in blaue Kupfer(II)-sulfat-Lösung getaucht. Auf dem Blech scheidet sich rotbraunes Kupfer ab.'},
@@ -269,68 +361,95 @@ const REACTIONS=[
 <script>
 // ---------- Zustand ----------
 const LEVELS={
-  1:{name:'Stufe 1',title:'Grundlagen',desc:'Die Teilchen stehen schon da. Du ergänzt Elektronen und Koeffizienten.'},
-  2:{name:'Stufe 2',title:'Aufbau',desc:'Du setzt die Gleichungen selbst aus Teilchen zusammen.'},
-  3:{name:'Stufe 3',title:'Profi',desc:'Aluminium, Eisen(III) und mehr – mit Fallen im Teilchen-Vorrat.'}
+  9:{1:{name:'Stufe 1',title:'Grundlagen',desc:'Die Teilchen stehen schon da. Du ergänzt Elektronen und Koeffizienten.'},
+     2:{name:'Stufe 2',title:'Aufbau',desc:'Du setzt die Gleichungen selbst aus Teilchen zusammen.'},
+     3:{name:'Stufe 3',title:'Profi',desc:'Aluminium, Eisen(III) und mehr – mit Fallen im Teilchen-Vorrat.'}},
+  10:{1:{name:'Stufe 1',title:'Saure Lösung',desc:'Redoxpaare vorgegeben. Du gleichst mit H₃O⁺ und H₂O aus.'},
+      2:{name:'Stufe 2',title:'Basische Lösung',desc:'Redoxpaare vorgegeben. Du gleichst mit OH⁻ und H₂O aus.'},
+      3:{name:'Stufe 3',title:'Profi',desc:'Sauer oder basisch gemischt. Du baust alles selbst und wählst die passenden Ausgleichsteilchen.'}}
 };
-const TEST_LEN=5;
-const STEP_MAX={1:40,2:20,3:40};
-let S={screen:'start',mode:'learn',level:1};
+const TEST_LEN=5,MAXC=30,HS_KEY='redox-werkstatt-hs-v2';
+const STEP_MAX={9:{1:40,2:20,3:40},10:{0:20,1:30,2:10,3:40}};
+let S={screen:'start',mode:'learn',grade:9,level:1,proton:'H3O'};
+try{const sv=localStorage.getItem('redox-werkstatt-proton');if(sv==='H'||sv==='H3O') S.proton=sv;}catch(e){}
+try{const qp=new URLSearchParams(location.search).get('proton');if(qp) S.proton=qp.toLowerCase()==='h'?'H':'H3O';}catch(e){}
+const PK=()=>S.proton==='H'?'H^+':'H3O^+';
+const PNAME=()=>S.proton==='H'?'Wasserstoff-Ionen':'Oxonium-Ionen';
+const TITLES={'zn-cu':'Zink in Kupfersulfat-Lösung','fe-cu':'Eisennagel in Kupfersulfat-Lösung','mg-zn':'Magnesium in Zinksulfat-Lösung','mg-cl':'Magnesium verbrennt in Chlor','zn-s':'Zink und Schwefel','fe-s':'Eisen und Schwefel','na-cl':'Natrium verbrennt in Chlor','cu-ag':'Der Silberbaum',
+ 'mg-o':'Magnesium verbrennt','ca-o':'Calcium an der Luft','k-br':'Kalium und Brom','li-o':'Lithium und Sauerstoff','zn-ag':'Zink in Silbernitrat-Lösung','mg-ag':'Magnesium in Silbernitrat-Lösung','na-s':'Natrium und Schwefel','ca-cl':'Calcium und Chlor',
+ 'al-cl':'Aluminium in Chlorgas','al-o':'Die Oxidschicht des Aluminiums','fe-cl':'Eisenwolle in Chlorgas','al-cu':'Aluminium in Kupferchlorid-Lösung','al-br':'Aluminium und Brom','fe-o':'Rosten (vereinfacht)','mg-fe':'Magnesium in Eisen(III)-chlorid-Lösung','al-ag':'Aluminium in Silbernitrat-Lösung','al-zn':'Aluminium in Zinksulfat-Lösung',
+ 'mn-fe':'Permanganat und Eisen(II)','mn-ox':'Permanganat und Oxalat','mn-h2o2':'Permanganat und Wasserstoffperoxid','cr-i':'Dichromat und Iodid','cu-no3':'Kupfer in Salpetersäure','h2o2-i':'Wasserstoffperoxid und Iodid','mn-so3':'Permanganat und Sulfit',
+ 'mn-so3-b':'Permanganat und Sulfit','cl-dis':'Bleichlauge aus Chlor','fe-oh':'Eisen(II)-hydroxid an der Luft','mn-h2o2-b':'Permanganat und Wasserstoffperoxid','mn-i-b':'Permanganat und Iodid','clo-i':'Hypochlorit und Iodid'};
 let timerId=null;
 
 const $app=document.getElementById('app');
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const uniq=a=>[...new Set(a)];
 const pts=s=>s>0?'+'+s:(s<0?'−'+(-s):'±0');
+const hsKey=l=>S.grade===9?String(l):'10-'+l;
+const medIon=()=>S.rx.med==='acid'?PK():'OH^-';
+const H2O='H<sub>2</sub>O';
 
-function loadHS(){try{return JSON.parse(localStorage.getItem('redox-werkstatt-hs-v2')||'{}')||{};}catch(e){return {};}}
-function saveHS(h){try{localStorage.setItem('redox-werkstatt-hs-v2',JSON.stringify(h));}catch(e){}}
+function loadHS(){try{return JSON.parse(localStorage.getItem(HS_KEY)||'{}')||{};}catch(e){return {};}}
+function saveHS(h){try{localStorage.setItem(HS_KEY,JSON.stringify(h));}catch(e){}}
 
+function taskPool(){return S.grade===9?REACTIONS.filter(r=>r.lvl===S.level):REACTIONS10.filter(r=>S.level===3||r.lvl===S.level);}
 function startSession(){
-  const pool=REACTIONS.filter(r=>r.lvl===S.level);
-  S.screen='task';
-  S.points=0; S.idx=0;
-  if(S.mode==='test'){
-    S.tasks=shuffle(pool).slice(0,TEST_LEN);
-    S.t0=Date.now(); startTimer();
-  }else{
-    S.tasks=shuffle(pool); stopTimer();
-  }
+  const pool=taskPool();
+  S.screen='task';S.points=0;S.idx=0;
+  if(S.mode==='test'){S.tasks=shuffle(pool).slice(0,TEST_LEN);S.t0=Date.now();startTimer();}
+  else{S.tasks=shuffle(pool);stopTimer();}
   loadTask();
 }
 function loadTask(){
-  if(S.mode==='learn' && S.idx>=S.tasks.length){S.tasks=shuffle(S.tasks);S.idx=0;}
-  const rx=S.tasks[S.idx];
-  S.rx=rx; S.sol=solve(rx);
-  S.step=1; S.done={}; S.att={1:0,2:0,3:0}; S.hint={1:0,2:0,3:0}; S.fb={}; S.revealed={}; S.taskPts=0;
-  S.fac={fo:'',fr:''};S.missing={};S.gForm='ion';S.pen={1:0,2:0,3:0};
-  const blank=()=>({L:[],R:[],label:null});
+  if(S.mode==='learn'&&S.idx>=S.tasks.length){S.tasks=shuffle(S.tasks);S.idx=0;}
+  const rx=S.tasks[S.idx],g10=S.grade===10;
+  S.rx=rx;S.sol=g10?solve10(rx,PK()):solve(rx);
+  S.step=g10?0:1;S.done={};S.att={0:0,1:0,2:0,3:0};S.hint={0:0,1:0,2:0,3:0};S.fb={};S.revealed={};S.taskPts=0;
+  S.fac={fo:'',fr:''};S.missing={};S.gForm='ion';S.pen={0:0,1:0,2:0,3:0};
+  S.oxsel={'ox-R':'','ox-P':'','red-R':'','red-P':''};S.pairOrder=shuffle(['ox','red']);
+  const blank=()=>({L:[],R:[],label:null}),fx=sp=>({sp,c:1,fixed:true});
   S.b={t0:blank(),t1:blank(),g:{L:[],R:[]}};
-  if(S.level===1){
-    const halves=shuffle([[rx.m,rx.mP],[rx.o,rx.oP]]);
-    halves.forEach((h,i)=>{S.b['t'+i].L=[{sp:h[0],c:1,fixed:true}];S.b['t'+i].R=[{sp:h[1],c:1,fixed:true}];});
-    S.b.g.L=[{sp:rx.m,c:1,fixed:true},{sp:rx.o,c:1,fixed:true}];S.b.g.R=[{sp:rx.mP,c:1,fixed:true},{sp:rx.oP,c:1,fixed:true}];
-  }
-  const base=[rx.m,rx.o,rx.mP,rx.oP];
-  const dis=S.level===3?(rx.distract||[]):[];
-  if(S.level===1){S.pool1=['e'];S.pool3=['e'];}
-  else{
-    S.pool1=shuffle([...base,'e',...dis,...(S.level===3&&rx.salt?[rx.salt]:[])]);
-    S.pool3=shuffle([...base,'e',...(rx.salt?[rx.salt]:[]),...dis]);
+  if(!g10){
+    if(S.level===1){
+      shuffle([[rx.m,rx.mP],[rx.o,rx.oP]]).forEach((h,i)=>{S.b['t'+i].L=[fx(h[0])];S.b['t'+i].R=[fx(h[1])];});
+      S.b.g.L=[fx(rx.m),fx(rx.o)];S.b.g.R=[fx(rx.mP),fx(rx.oP)];
+      S.pool1=['e'];S.pool3=['e'];
+    }else{
+      const base=[rx.m,rx.o,rx.mP,rx.oP],dis=S.level===3?(rx.distract||[]):[];
+      S.pool1=shuffle([...base,'e',...dis,...(S.level===3&&rx.salt?[rx.salt]:[])]);
+      S.pool3=shuffle([...base,'e',...(rx.salt?[rx.salt]:[]),...dis]);
+    }
+  }else{
+    const mi=medIon();
+    if(S.level<3){
+      shuffle([rx.ox,rx.red]).forEach((h,i)=>{S.b['t'+i].L=[fx(h.R)];S.b['t'+i].R=[fx(h.P)];});
+      S.b.g.L=uniq([rx.red.R,rx.ox.R]).map(fx);S.b.g.R=uniq([rx.red.P,rx.ox.P]).map(fx);
+      S.pool1=['e','H2O',mi];S.pool3=['e','H2O',mi];
+    }else{
+      const base=uniq([rx.ox.R,rx.ox.P,rx.red.R,rx.red.P]);
+      S.pool1=shuffle([...base,'e','H2O',PK(),'OH^-','O2-']);
+      S.pool3=shuffle([...base,'e','H2O',PK(),'OH^-']);
+    }
   }
   S.active={id:'t0',side:'L'};
-  render();
-  window.scrollTo({top:0});
+  render();window.scrollTo({top:0});
 }
 function startTimer(){stopTimer();timerId=setInterval(()=>{const el=document.getElementById('timer');if(el) el.textContent=clock(Date.now()-S.t0);},1000);}
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
 function clock(ms){const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 
-// ---------- Auswertung ----------
-function toEq(b){
-  const f=list=>{const o={};list.forEach(t=>{o[t.sp]=(o[t.sp]||0)+t.c;});return o;};
-  return {L:f(b.L),R:f(b.R)};
-}
+// ---------- Auswertung allgemein ----------
+function toEq(b){const f=list=>{const o={};list.forEach(t=>{o[t.sp]=(o[t.sp]||0)+t.c;});return o;};return {L:f(b.L),R:f(b.R)};}
 function signed(q){return q>0?'+'+q:(q<0?'−'+(-q):'0');}
+function balanceMsg(E){
+  const t=tally(E),els=new Set([...Object.keys(t.L.el),...Object.keys(t.R.el)]);
+  for(const x of els){const l=t.L.el[x]||0,r=t.R.el[x]||0;if(l!==r) return `Die Atome sind nicht ausgeglichen: ${x} links ${l}, rechts ${r}.`;}
+  if(t.L.q!==t.R.q) return `Die Ladungen sind nicht ausgeglichen: links ${signed(t.L.q)}, rechts ${signed(t.R.q)}.`;
+  return null;
+}
+
+// ---------- Auswertung Klasse 9 ----------
 function distractMsg(sp){
   const p=parseSp(sp),els=Object.keys(p.el);
   if(p.q===0&&els.length===1&&p.el[els[0]]===1&&['Cl','Br','O','I'].includes(sp))
@@ -339,18 +458,15 @@ function distractMsg(sp){
   if(sp.startsWith('Fe')) return 'Lies den Aufgabentext genau: Welche Eisen-Ionen kommen hier vor?';
   return `${fmt(sp)} kommt in dieser Reaktion nicht vor. Welche Ladung hat das Ion wirklich? Nutze das Periodensystem und den Aufgabentext.`;
 }
-function balanceMsg(E){
-  const t=tally(E);
-  const els=new Set([...Object.keys(t.L.el),...Object.keys(t.R.el)]);
-  for(const x of els){const l=t.L.el[x]||0,r=t.R.el[x]||0;
-    if(l!==r) return `Die Atome sind nicht ausgeglichen: ${x} links ${l}, rechts ${r}.`;}
-  if(t.L.q!==t.R.q) return `Die Ladungen sind nicht ausgeglichen: links ${signed(t.L.q)}, rechts ${signed(t.R.q)}.`;
-  return null;
+function labelCheck(target,label){
+  if(!label) return {ok:false,eqOk:true,target,msg:'Die Gleichung stimmt. Ordne sie noch zu: Oxidation oder Reduktion?'};
+  if(label!==target) return {ok:false,eqOk:true,target,msg:target==='ox'
+    ?'Die Gleichung stimmt, aber die Zuordnung nicht: Hier werden Elektronen abgegeben, das ist eine Oxidation.'
+    :'Die Gleichung stimmt, aber die Zuordnung nicht: Hier werden Elektronen aufgenommen, das ist eine Reduktion.'};
+  return {ok:true,eqOk:true,target};
 }
 function analyzeTeil(E,label){
-  const rx=S.rx,sol=S.sol;
-  const kL=keysOf(E.L),kR=keysOf(E.R),all=[...kL,...kR];
-  if(!kL.length||!kR.length) return {ok:false,msg:'Beide Seiten brauchen mindestens ein Teilchen.'};
+  const rx=S.rx,sol=S.sol,kL=keysOf(E.L),kR=keysOf(E.R),all=[...kL,...kR];
   for(const sp of all) if((rx.distract||[]).includes(sp)) return {ok:false,msg:distractMsg(sp)};
   if(rx.salt&&all.includes(rx.salt)) return {ok:false,msg:`Salzformeln wie ${fmt(rx.salt)} gehören nicht in Teilgleichungen. Hier betrachtest du Atome und Ionen einzeln.`};
   const eL=E.L.e||0,eR=E.R.e||0;
@@ -358,52 +474,26 @@ function analyzeTeil(E,label){
   const nonE=all.filter(s=>s!=='e');
   const isOx=nonE.some(s=>s===rx.m||s===rx.mP),isRed=nonE.some(s=>s===rx.o||s===rx.oP);
   if(isOx&&isRed) return {ok:false,msg:'Eine Teilgleichung beschreibt nur einen Stoff und das Teilchen, das daraus wird. Trenne Oxidation und Reduktion.'};
-  const target=isOx?'ox':'red';
-  const [reac,prod]=isOx?[rx.m,rx.mP]:[rx.o,rx.oP];
-  const nL=kL.filter(s=>s!=='e'),nR=kR.filter(s=>s!=='e');
-  if(nL.includes(prod)||nR.includes(reac)) return {ok:false,target,msg:'Links steht der Ausgangsstoff, rechts das Teilchen, das daraus entsteht.'};
-  if(!nL.includes(reac)) return {ok:false,target,msg:`Es fehlt der Ausgangsstoff ${fmt(reac)}.`};
-  if(!nR.includes(prod)) return {ok:false,target,msg:`Es fehlt das Produkt ${fmt(prod)}.`};
+  const target=isOx?'ox':'red',[reac,prod]=isOx?[rx.m,rx.mP]:[rx.o,rx.oP];
+  if(kL.includes(prod)||kR.includes(reac)) return {ok:false,target,msg:'Links steht der Ausgangsstoff, rechts das Teilchen, das daraus entsteht.'};
+  if(!kL.includes(reac)) return {ok:false,target,msg:`Es fehlt der Ausgangsstoff ${fmt(reac)}.`};
+  if(!kR.includes(prod)) return {ok:false,target,msg:`Es fehlt das Produkt ${fmt(prod)}.`};
   if(!eL&&!eR) return {ok:false,target,msg:'Es fehlen die Elektronen. Werden hier Elektronen abgegeben oder aufgenommen?'};
   const bm=balanceMsg(E);
-  if(bm){
-    let extra='';
+  if(bm){let extra='';
     if(target==='ox'&&eL) extra=' Tipp: Hier werden Elektronen abgegeben, sie stehen also bei den Produkten.';
     if(target==='red'&&eR) extra=' Tipp: Hier werden Elektronen aufgenommen, sie stehen also bei den Ausgangsstoffen.';
-    return {ok:false,target,msg:bm+extra};
-  }
-  const C=target==='ox'?sol.ox:sol.red;
-  if(!eqEqual(E,C)) return {ok:false,target,msg:'Die Gleichung ist ausgeglichen, aber nicht gekürzt. Verwende die kleinstmöglichen Koeffizienten.'};
-  if(!label) return {ok:false,eqOk:true,target,msg:'Die Gleichung stimmt. Ordne sie noch zu: Oxidation oder Reduktion?'};
-  if(label!==target) return {ok:false,eqOk:true,target,msg:target==='ox'
-    ?'Die Gleichung stimmt, aber die Zuordnung nicht: Hier werden Elektronen abgegeben, das ist eine Oxidation.'
-    :'Die Gleichung stimmt, aber die Zuordnung nicht: Hier werden Elektronen aufgenommen, das ist eine Reduktion.'};
-  return {ok:true,eqOk:true,target};
+    return {ok:false,target,msg:bm+extra};}
+  if(!eqEqual(E,target==='ox'?sol.ox:sol.red)) return {ok:false,target,msg:'Die Gleichung ist ausgeglichen, aber nicht gekürzt. Verwende die kleinstmöglichen Koeffizienten.'};
+  return labelCheck(target,label);
 }
-function evalStep1(){
-  const r=[0,1].map(i=>analyzeTeil(toEq(S.b['t'+i]),S.b['t'+i].label));
-  if(r[0].target&&r[0].target===r[1].target&&r[0].eqOk&&r[1].eqOk){
-    r[1]={ok:false,target:r[1].target,msg:'Beide Teilgleichungen beschreiben denselben Vorgang. Es fehlt die andere Hälfte.'};
-  }
-  return {ok:r[0].ok&&r[1].ok,r};
-}
-function evalStep2(){
-  const fo=parseInt(S.fac.fo,10),fr=parseInt(S.fac.fr,10),{nOx,nRed}=S.sol;
-  if(!(fo>=1)||!(fr>=1)) return {ok:false,msg:'Trage für beide Teilgleichungen einen ganzzahligen Faktor ein (mindestens 1).'};
-  const a=fo*nOx,b=fr*nRed;
-  if(a!==b) return {ok:false,msg:`Abgegeben werden ${fo} · ${nOx} = ${a} e<sup>−</sup>, aufgenommen ${fr} · ${nRed} = ${b} e<sup>−</sup>. Beide Zahlen müssen gleich sein.`};
-  if(fo!==S.sol.fo) return {ok:false,msg:`Die Elektronenzahlen sind gleich (${a}), aber es geht kleiner. Nutze das kleinste gemeinsame Vielfache.`};
-  return {ok:true,msg:`Abgegeben ${a} e<sup>−</sup>, aufgenommen ${b} e<sup>−</sup>.`};
-}
-function evalStep3(){
+function evalStep3_9(){
   const rx=S.rx,E=toEq(S.b.g),kL=keysOf(E.L),kR=keysOf(E.R),all=[...kL,...kR];
-  if(!kL.length||!kR.length) return {ok:false,msg:'Beide Seiten brauchen mindestens ein Teilchen.'};
   if(all.includes('e')) return {ok:false,msg:'In der Gesamtgleichung stehen keine Elektronen mehr. Sie werden abgegeben und gleich wieder aufgenommen, also gekürzt.'};
   for(const sp of all) if((rx.distract||[]).includes(sp)) return {ok:false,msg:distractMsg(sp)};
   const hasSalt=rx.salt&&all.includes(rx.salt);
   if(hasSalt&&(all.includes(rx.mP)||all.includes(rx.oP))) return {ok:false,msg:`Entscheide dich: entweder die Ionen oder die Salzformel ${fmt(rx.salt)}, nicht beides.`};
-  const F=hasSalt?S.sol.forms[1]:S.sol.forms[0];
-  const expL=keysOf(F.L),expR=keysOf(F.R);
+  const F=hasSalt?S.sol.forms[1]:S.sol.forms[0],expL=keysOf(F.L),expR=keysOf(F.R);
   if(kL.some(s=>expR.includes(s))||kR.some(s=>expL.includes(s))) return {ok:false,msg:'Links stehen die Ausgangsstoffe, rechts die Produkte.'};
   for(const s of expL) if(!kL.includes(s)) return {ok:false,msg:`Bei den Ausgangsstoffen fehlt ${fmt(s)}.`};
   for(const s of expR) if(!kR.includes(s)) return {ok:false,msg:`Bei den Produkten fehlt ${fmt(s)}.`};
@@ -413,11 +503,107 @@ function evalStep3(){
   return {ok:true};
 }
 
-// ---------- Aktionen ----------
+// ---------- Auswertung Klasse 10 ----------
+function mediumMsg(sp){
+  const med=S.rx.med;
+  if(med==='acid'&&sp==='OH^-') return `In saurer Lösung gibt es kaum Hydroxid-Ionen. Gleiche mit ${PNAME()} ${fmt(PK())} und Wasser aus.`;
+  if(med==='base'&&sp===PK()) return `In basischer Lösung gibt es kaum ${PNAME()}. Gleiche mit Hydroxid-Ionen ${fmt('OH^-')} und Wasser aus.`;
+  if(sp==='O2-') return 'Oxid-Ionen kommen in wässriger Lösung nicht frei vor. Sauerstoff gleichst du mit Wasser aus.';
+  return null;
+}
+function evalStep0(){
+  const {rx,sol}=S,msgs=[],brief=[];let ok=true;
+  S.pairOrder.forEach((k,i)=>{const p=rx[k];let rowOk=true;
+    for(const side of ['R','P']){
+      if(parseInt(S.oxsel[k+'-'+side],10)!==sol.oxn[k+side]){rowOk=false;msgs.push(`<p><b>Redoxpaar ${i+1}:</b> Die Oxidationszahl von ${p.x} in ${fmt(p[side])} stimmt nicht.</p>`);}
+    }
+    if(!rowOk) ok=false;
+    brief.push(`<p><b>Redoxpaar ${i+1}:</b> ${rowOk?'stimmt.':'stimmt noch nicht.'}</p>`);
+  });
+  return {ok,msgs:msgs.join('')+'<p>Merke: Sauerstoff hat meist −II, Wasserstoff +I. Die Summe ergibt die Ladung des Teilchens.</p>',brief:brief.join('')};
+}
+function oxExplain(){
+  return S.pairOrder.map((k,i)=>{const p=S.rx[k],a=S.sol.oxn[k+'R'],b=S.sol.oxn[k+'P'];
+    return `<p>Redoxpaar ${i+1}: ${p.x} von ${roman(a)} auf ${roman(b)}, die Oxidationszahl ${b>a?'steigt. Das ist eine Oxidation.':'sinkt. Das ist eine Reduktion.'}</p>`;}).join('');
+}
+function analyzeTeil10(E,label){
+  const rx=S.rx,sol=S.sol,kL=keysOf(E.L),kR=keysOf(E.R),all=[...kL,...kR];
+  for(const sp of all){const m=mediumMsg(sp);if(m) return {ok:false,msg:m};}
+  const eL=E.L.e||0,eR=E.R.e||0;
+  if(eL&&eR) return {ok:false,msg:'Elektronen stehen nur auf einer Seite der Teilgleichung.'};
+  const aux=['H2O','H3O^+','H^+','OH^-'];
+  const coreO=[rx.ox.R,rx.ox.P].filter(s=>!aux.includes(s)),coreR=[rx.red.R,rx.red.P].filter(s=>!aux.includes(s));
+  const inO=coreO.filter(s=>!coreR.includes(s)).some(s=>all.includes(s)),inR=coreR.filter(s=>!coreO.includes(s)).some(s=>all.includes(s));
+  if(inO&&inR) return {ok:false,msg:'Eine Teilgleichung beschreibt nur ein Redoxpaar. Trenne Oxidation und Reduktion.'};
+  const target=inO?'ox':inR?'red':null;
+  if(!target) return {ok:false,msg:'Zu welchem Redoxpaar gehört diese Teilgleichung? Es fehlt das Teilchen, das aus dem Ausgangsstoff entsteht.'};
+  const p=rx[target];
+  if(kL.includes(p.P)||kR.includes(p.R)) return {ok:false,target,msg:'Links steht der Ausgangsstoff, rechts das Teilchen, das daraus entsteht.'};
+  if(!kL.includes(p.R)) return {ok:false,target,msg:`Es fehlt der Ausgangsstoff ${fmt(p.R)}.`};
+  if(!kR.includes(p.P)) return {ok:false,target,msg:`Es fehlt das Produkt ${fmt(p.P)}.`};
+  const nxL=(E.L[p.R]||0)*parseSp(p.R).el[p.x],nxR=(E.R[p.P]||0)*parseSp(p.P).el[p.x];
+  if(!['H2O','OH^-','H3O^+'].includes(p.P)&&nxL!==nxR) return {ok:false,target,msg:`Gleiche zuerst die ${p.x}-Atome aus: links ${nxL}, rechts ${nxR}.`};
+  const a=sol.oxn[target+'R'],b=sol.oxn[target+'P'],dox=b-a;
+  if(!eL&&!eR) return {ok:false,target,msg:`Es fehlen die Elektronen. Die Oxidationszahl von ${p.x} ${dox>0?'steigt':'sinkt'}: Werden Elektronen abgegeben oder aufgenommen?`};
+  if(dox>0&&eL) return {ok:false,target,msg:'Die Oxidationszahl steigt, es werden also Elektronen abgegeben. Sie gehören auf die rechte Seite.'};
+  if(dox<0&&eR) return {ok:false,target,msg:'Die Oxidationszahl sinkt, es werden also Elektronen aufgenommen. Sie gehören auf die linke Seite.'};
+  const need=nxL*Math.abs(dox),have=eL||eR;
+  if(have!==need) return {ok:false,target,msg:`${p.x} geht von ${roman(a)} auf ${roman(b)}: ${Math.abs(dox)} e<sup>−</sup> pro Atom. Bei ${nxL} ${p.x}-Atom${nxL>1?'en':''} sind das ${need} e<sup>−</sup>.`};
+  const t=tally(E);
+  if(t.L.q!==t.R.q) return {ok:false,target,msg:`Die Ladungen sind nicht ausgeglichen: links ${signed(t.L.q)}, rechts ${signed(t.R.q)}. ${rx.med==='acid'?'In saurer Lösung gleichst du mit '+fmt(PK())+' aus.':'In basischer Lösung gleichst du mit '+fmt('OH^-')+' aus.'}`};
+  for(const x of new Set([...Object.keys(t.L.el),...Object.keys(t.R.el)])){
+    const l=t.L.el[x]||0,r=t.R.el[x]||0;
+    if(l!==r){
+      if(x==='O') return {ok:false,target,msg:`Sauerstoff ist nicht ausgeglichen: links ${l}, rechts ${r}. Gleiche mit ${H2O} aus.`};
+      if(x==='H') return {ok:false,target,msg:`Wasserstoff ist nicht ausgeglichen: links ${l}, rechts ${r}. Prüfe ${H2O} und ${fmt(medIon())}.`};
+      return {ok:false,target,msg:`Die ${x}-Atome sind nicht ausgeglichen: links ${l}, rechts ${r}.`};
+    }
+  }
+  if(!eqEqual(E,target==='ox'?sol.ox:sol.red)){
+    const both=kL.filter(k=>kR.includes(k));
+    if(both.length) return {ok:false,target,msg:`${fmt(both[0])} steht auf beiden Seiten. Kürze es heraus.`};
+    return {ok:false,target,msg:'Die Gleichung ist ausgeglichen, aber nicht gekürzt. Verwende die kleinstmöglichen Koeffizienten.'};
+  }
+  return labelCheck(target,label);
+}
+function evalGes10(){
+  const E=toEq(S.b.g),kL=keysOf(E.L),kR=keysOf(E.R),all=[...kL,...kR],F=S.sol.forms[0];
+  if(all.includes('e')) return {ok:false,msg:'In der Gesamtgleichung stehen keine Elektronen mehr. Sie werden abgegeben und gleich wieder aufgenommen, also gekürzt.'};
+  for(const sp of all){const m=mediumMsg(sp);if(m) return {ok:false,msg:m};}
+  const both=kL.filter(k=>kR.includes(k));
+  if(both.length) return {ok:false,msg:`${fmt(both[0])} steht auf beiden Seiten. Kürze Teilchen, die links und rechts vorkommen.`};
+  const fL=keysOf(F.L),fR=keysOf(F.R),aux=['H2O','H3O^+','H^+','OH^-'];
+  if(kL.some(s=>fR.includes(s)&&!aux.includes(s))||kR.some(s=>fL.includes(s)&&!aux.includes(s))) return {ok:false,msg:'Links stehen die Ausgangsstoffe, rechts die Produkte.'};
+  for(const s of fL) if(!kL.includes(s)) return {ok:false,msg:aux.includes(s)?`Nach dem Kürzen bleibt links noch ${fmt(s)} übrig.`:`Bei den Ausgangsstoffen fehlt ${fmt(s)}.`};
+  for(const s of fR) if(!kR.includes(s)) return {ok:false,msg:aux.includes(s)?`Nach dem Kürzen bleibt rechts noch ${fmt(s)} übrig.`:`Bei den Produkten fehlt ${fmt(s)}.`};
+  for(const s of all) if(!fL.includes(s)&&!fR.includes(s)) return {ok:false,msg:`${fmt(s)} bleibt nach dem Kürzen nicht übrig. Prüfe, wie oft es links und rechts vorkommt.`};
+  const bm=balanceMsg(E);
+  if(bm) return {ok:false,msg:bm+' Multipliziere die Teilgleichungen mit den Faktoren, addiere sie und kürze.'};
+  if(!eqEqual(E,F)) return {ok:false,msg:'Die Gleichung ist ausgeglichen, aber nicht gekürzt. Verwende die kleinstmöglichen Koeffizienten.'};
+  return {ok:true};
+}
+
+// ---------- Schritte ----------
+function evalStep1(){
+  const fn=S.grade===10?analyzeTeil10:analyzeTeil;
+  const r=[0,1].map(i=>fn(toEq(S.b['t'+i]),S.b['t'+i].label));
+  if(r[0].target&&r[0].target===r[1].target&&r[0].eqOk&&r[1].eqOk)
+    r[1]={ok:false,target:r[1].target,msg:'Beide Teilgleichungen beschreiben denselben Vorgang. Es fehlt die andere Hälfte.'};
+  return {ok:r[0].ok&&r[1].ok,r};
+}
+function evalStep2(){
+  const fo=parseInt(S.fac.fo,10),fr=parseInt(S.fac.fr,10),{nOx,nRed}=S.sol,a=fo*nOx,b=fr*nRed;
+  if(a!==b) return {ok:false,msg:`Abgegeben werden ${fo} · ${nOx} = ${a} e<sup>−</sup>, aufgenommen ${fr} · ${nRed} = ${b} e<sup>−</sup>. Beide Zahlen müssen gleich sein.`};
+  if(fo!==S.sol.fo) return {ok:false,msg:`Die Elektronenzahlen sind gleich (${a}), aber es geht kleiner. Nutze das kleinste gemeinsame Vielfache.`};
+  return {ok:true,msg:`Abgegeben ${a} e<sup>−</sup>, aufgenommen ${b} e<sup>−</sup>.`};
+}
 function locked(id){return id==='g'?(S.step!==3||S.done[3]):(S.step!==1);}
 function incomplete(step){
   const miss={};let msg='';
-  if(step===1||step===3){
+  if(step===0){
+    for(const k of Object.keys(S.oxsel)) if(S.oxsel[k]==='') miss['oxs-'+k]=true;
+    if(Object.keys(miss).length) msg='Es fehlen noch Oxidationszahlen (gelb markiert).';
+  }else if(step===1||step===3){
     const ids=step===1?['t0','t1']:['g'];
     ids.forEach(id=>['L','R'].forEach(s=>{if(!S.b[id][s].length) miss['side-'+id+'-'+s]=true;}));
     if(Object.keys(miss).length) msg='Es sind noch nicht alle Seiten der Gleichung gefüllt (gelb markiert).';
@@ -433,63 +619,65 @@ function incomplete(step){
   return msg?{miss,msg}:null;
 }
 function check(step){
-  const learn=S.mode==='learn';
-  const inc=incomplete(step);
+  const learn=S.mode==='learn',maxP=STEP_MAX[S.grade][step],inc=incomplete(step);
   S.missing=inc?inc.miss:{};
   if(inc){
     let note='';
-    if(!learn){const d=STEP_MAX[step]/10;S.pen[step]+=d;note=` Kein Versuch verbraucht, aber −${d} Punkte für diesen Schritt.`;}
-    S.fb[step]={type:'info',html:`<p>${inc.msg}${note}</p>`};render();return;}
-  S.att[step]++;
-  let ok=false,html='';
-  if(step===1){
-    const res=evalStep1();ok=res.ok;
-    if(!ok){
-      if(learn) html=res.r.map((x,i)=>x.ok?`<p><b>Teilgleichung ${i+1}:</b> stimmt.</p>`:`<p><b>Teilgleichung ${i+1}:</b> ${x.msg}</p>`).join('');
-      else html=res.r.map((x,i)=>{
-        if(!S.b['t'+i].label){S.missing['lab-t'+i]=true;return `<p><b>Teilgleichung ${i+1}:</b> Zuordnung fehlt (gelb markiert).</p>`;}
-        return `<p><b>Teilgleichung ${i+1}:</b> ${x.ok?'stimmt.':'stimmt noch nicht.'}</p>`;}).join('');
-    }
-    S._partial1=res.r.filter(x=>x.ok).length;
-  }else if(step===2){
-    const res=evalStep2();ok=res.ok;html=learn||ok?`<p>${res.msg}</p>`:'<p>Die Faktoren stimmen noch nicht.</p>';
-  }else{
-    const res=evalStep3();ok=res.ok;html=learn?`<p>${res.msg||''}</p>`:'<p>Die Gesamtgleichung stimmt noch nicht.</p>';
+    if(!learn){const d=maxP/10;S.pen[step]+=d;note=` Kein Versuch verbraucht, aber −${d} Punkte für diesen Schritt.`;}
+    S.fb[step]={type:'info',html:`<p>${inc.msg}${note}</p>`};render();return;
   }
-  const maxP=STEP_MAX[step];
+  S.att[step]++;
+  let ok=false,html='';S._partial1=0;
+  if(step===0){const res=evalStep0();ok=res.ok;if(!ok) html=learn?res.msgs:res.brief;}
+  else if(step===1){
+    const res=evalStep1();ok=res.ok;
+    if(!ok) html=res.r.map((x,i)=>`<p><b>Teilgleichung ${i+1}:</b> ${x.ok?'stimmt.':(learn?x.msg:'stimmt noch nicht.')}</p>`).join('');
+    S._partial1=res.r.filter(x=>x.ok).length;
+  }else if(step===2){const res=evalStep2();ok=res.ok;html=learn||ok?`<p>${res.msg}</p>`:'<p>Die Faktoren stimmen noch nicht.</p>';}
+  else{const res=S.grade===10?evalGes10():evalStep3_9();ok=res.ok;html=learn?`<p>${res.msg||''}</p>`:'<p>Die Gesamtgleichung stimmt noch nicht.</p>';}
   if(ok){
     let msg=step===3?'Gesamtgleichung richtig.':'Richtig.';
     if(!learn){const base=S.att[step]===1?maxP:maxP/2,p=Math.max(0,base-S.pen[step]);S.points+=p;S.taskPts+=p;
       msg+=` ${pts(p)} Punkte${S.pen[step]?` (${base} − ${S.pen[step]} für Lücken)`:''}.`;}
-    S.fb[step]={type:'ok',html:`<p><b>${msg}</b></p>`+(step===2?html:'')};
+    S.fb[step]={type:'ok',html:`<p><b>${msg}</b></p>`+(step===2?html:'')+(step===0&&learn?oxExplain():'')};
     advance(step);
   }else if(!learn&&S.att[step]>=2){
-    let p=0;if(step===1)p=Math.max(0,S._partial1*10-S.pen[1]);
+    const p=step===1?Math.max(0,S._partial1*10-S.pen[1]):0;
     S.points+=p;S.taskPts+=p;
     S.fb[step]={type:'bad',html:html+`<p><b>Kein Versuch mehr.</b> ${p?pts(p)+' Punkte für die richtige Teilgleichung. ':''}Die Lösung steht unten.</p>`};
     S.revealed[step]=true;advance(step);
-  }else{
-    S.fb[step]={type:'bad',html:html+(learn?'':'<p>Noch 1 Versuch.</p>')};
-  }
+  }else S.fb[step]={type:'bad',html:html+(learn?'':'<p>Noch 1 Versuch.</p>')};
   render();
 }
 function advance(step){
   S.done[step]=true;S.step=step+1;
-  if(step===1) setTimeout(()=>{const el=document.getElementById('fo');if(el)el.focus({preventScroll:false});},30);
+  if(step===0) S.active={id:'t0',side:'L'};
+  if(step===1) setTimeout(()=>{const el=document.getElementById('fo');if(el) el.focus();},30);
   if(step===2) S.active={id:'g',side:'L'};
 }
 function showHint(step){
-  const {rx,sol}=S;
-  const H={
-    1:[`Metallatome geben ihre Außenelektronen ab und werden zu positiv geladenen Ionen. Nichtmetalle und Metall-Ionen nehmen Elektronen auf.`,
-       `Die Ionenladung verrät dir die Zahl der Elektronen. Hauptgruppen-Elemente: Schau ins Periodensystem. Bei Eisen und Kupfer steht die Ladung im Namen, z. B. Eisen(III).`,
-       `Gerüst: ${fmt(rx.m)} → ${fmt(rx.mP)} + ? e<sup>−</sup> und ${fmt(rx.o)} + ? e<sup>−</sup> → ${fmt(rx.oP)}. Denk an die Atombilanz!`],
-    2:[`Die Oxidation gibt ${sol.nOx} e<sup>−</sup> ab, die Reduktion nimmt ${sol.nRed} e<sup>−</sup> auf. Beide Zahlen müssen gleich groß werden.`,
-       `Das kleinste gemeinsame Vielfache von ${sol.nOx} und ${sol.nRed} ist ${sol.L}.`],
-    3:[`Multipliziere beide Teilgleichungen mit ihrem Faktor, schreibe sie untereinander und addiere sie.`,
-       `Die Elektronen stehen jetzt links und rechts gleich oft. Streiche sie.`+(rx.salt?` Die Produkt-Ionen darfst du zur Salzformel ${fmt(rx.salt)} zusammenfassen.`:'')]
-  };
-  const list=H[step];const i=Math.min(S.hint[step],list.length-1);S.hint[step]++;
+  const {rx,sol}=S;let list;
+  const h2=[`Die Oxidation gibt ${sol.nOx} e<sup>−</sup> ab, die Reduktion nimmt ${sol.nRed} e<sup>−</sup> auf. Beide Zahlen müssen gleich groß werden.`,
+            `Das kleinste gemeinsame Vielfache von ${sol.nOx} und ${sol.nRed} ist ${sol.L}.`];
+  if(S.grade===9){
+    list={1:[`Metallatome geben ihre Außenelektronen ab und werden zu positiv geladenen Ionen. Nichtmetalle und Metall-Ionen nehmen Elektronen auf.`,
+             `Die Ionenladung verrät dir die Zahl der Elektronen. Hauptgruppen-Elemente: Schau ins Periodensystem. Bei Eisen und Kupfer steht die Ladung im Namen, z. B. Eisen(III).`,
+             `Gerüst: ${fmt(rx.m)} → ${fmt(rx.mP)} + ? e<sup>−</sup> und ${fmt(rx.o)} + ? e<sup>−</sup> → ${fmt(rx.oP)}. Denk an die Atombilanz!`],
+          2:h2,
+          3:[`Multipliziere beide Teilgleichungen mit ihrem Faktor, schreibe sie untereinander und addiere sie.`,
+             `Die Elektronen stehen jetzt links und rechts gleich oft. Streiche sie.`+(rx.salt?` Die Produkt-Ionen darfst du zur Salzformel ${fmt(rx.salt)} zusammenfassen.`:'')]}[step];
+  }else{
+    const mi=fmt(medIon()),pr=k=>`${rx[k].x} von ${roman(sol.oxn[k+'R'])} auf ${roman(sol.oxn[k+'P'])}`;
+    list={0:['Elemente haben die Oxidationszahl 0. In Verbindungen hat Sauerstoff meist −II, Wasserstoff meist +I.',
+             `Die Summe aller Oxidationszahlen ergibt die Ladung des Teilchens. Beispiel: In ${fmt('SO4^2-')} gilt x + 4 · (−II) = −2, also x = +VI.`],
+          1:[`Gehe der Reihe nach vor: 1. Atome des Elements ausgleichen, das seine Oxidationszahl ändert. 2. Elektronen ergänzen. 3. Ladung mit ${mi} ausgleichen. 4. Sauerstoff mit ${H2O} ausgleichen.`,
+             `Elektronen = Änderung der Oxidationszahl × Anzahl der Atome. Hier: ${pr('ox')} und ${pr('red')}.`,
+             `Gerüst: ${fmt(rx.ox.R)} → ${fmt(rx.ox.P)} und ${fmt(rx.red.R)} → ${fmt(rx.red.P)}. Ausgleichsteilchen: ${mi} und ${H2O}.`],
+          2:h2,
+          3:['Multipliziere beide Teilgleichungen mit ihrem Faktor und addiere sie.',
+             `Kürze dann alles, was links und rechts steht: die Elektronen, aber auch ${H2O} und ${mi}.`]}[step];
+  }
+  const i=Math.min(S.hint[step],list.length-1);S.hint[step]++;
   S.fb[step]={type:'info',html:`<p><b>Tipp ${i+1} von ${list.length}:</b> ${list[i]}</p>`};
   render();
 }
@@ -504,21 +692,17 @@ function eqHTML(E){
 }
 function solHTML(step){
   const s=S.sol;
+  if(step===0) return S.pairOrder.map((k,i)=>{const p=S.rx[k];return `<p>Redoxpaar ${i+1}: ${p.x} in ${fmt(p.R)}: ${roman(s.oxn[k+'R'])} → ${p.x} in ${fmt(p.P)}: ${roman(s.oxn[k+'P'])}</p>`;}).join('');
   if(step===1) return `<p>Oxidation: ${eqHTML(s.ox)}</p><p>Reduktion: ${eqHTML(s.red)}</p>`;
   if(step===2) return `<p>Oxidation × ${s.fo}, Reduktion × ${s.fr}, dann werden je ${s.L} e<sup>−</sup> übertragen.</p>`;
   return s.forms.map(f=>`<p>${eqHTML(f)}</p>`).join('<p>oder zusammengefasst</p>');
 }
-function nextTask(){
-  S.idx++;
-  if(S.mode==='test'&&S.idx>=S.tasks.length){finishTest();return;}
-  loadTask();
-}
+function nextTask(){S.idx++;if(S.mode==='test'&&S.idx>=S.tasks.length){finishTest();return;}loadTask();}
 function finishTest(){
-  stopTimer();
-  S.time=Date.now()-S.t0;
-  const hs=loadHS(),prev=hs[S.level];
+  stopTimer();S.time=Date.now()-S.t0;
+  const hs=loadHS(),k=hsKey(S.level),prev=hs[k];
   S.newBest=!prev||S.points>prev.p||(S.points===prev.p&&S.time<prev.t);
-  if(S.newBest){hs[S.level]={p:S.points,t:S.time};saveHS(hs);}
+  if(S.newBest){hs[k]={p:S.points,t:S.time};saveHS(hs);}
   S.prevBest=prev;S.screen='end';render();window.scrollTo({top:0});
 }
 
@@ -529,9 +713,10 @@ function render(){
   else $app.innerHTML=endHTML();
 }
 function startHTML(){
-  const hs=loadHS();
-  const play=!S.introSeen;S.introSeen=true;
-  const lv=[1,2,3].map(l=>`<button class="tile" data-act="level" data-v="${l}" aria-pressed="${S.level===l}"><b>${LEVELS[l].name}: ${LEVELS[l].title}</b><span>${LEVELS[l].desc}</span>${S.mode==='test'&&hs[l]?`<small>Bestwert: ${hs[l].p} von ${TEST_LEN*100} Punkten in ${clock(hs[l].t)}</small>`:''}</button>`).join('');
+  const hs=loadHS(),play=!S.introSeen;S.introSeen=true;
+  const LV=LEVELS[S.grade];
+  const desc=l=>S.grade===10&&l===1?LV[1].desc.replace('H₃O⁺',S.proton==='H'?'H⁺':'H₃O⁺'):LV[l].desc;
+  const lv=[1,2,3].map(l=>`<button class="tile" data-act="level" data-v="${l}" aria-pressed="${S.level===l}"><b>${LV[l].name}: ${LV[l].title}</b><span>${desc(l)}</span>${S.mode==='test'&&hs[hsKey(l)]?`<small>Bestwert: ${hs[hsKey(l)].p} von ${TEST_LEN*100} Punkten in ${clock(hs[hsKey(l)].t)}</small>`:''}</button>`).join('');
   return `
   <section class="hero">
     <h1>Redox-Werkstatt</h1>
@@ -551,6 +736,15 @@ function startHTML(){
     <p>Elektronen wandern von einem Teilchen zum anderen. Du stellst die Teilgleichungen auf, ordnest Oxidation und Reduktion zu und fasst alles zur Gesamtgleichung zusammen.</p>
   </section>
   <section class="pick">
+    <h2>Jahrgangsstufe</h2>
+    <div class="tiles">
+      <button class="tile" data-act="grade" data-v="9" aria-pressed="${S.grade===9}"><b>Klasse 9</b><span>Metalle, Nichtmetalle und Metall-Ionen: Elektronenübergänge ohne Säure oder Lauge.</span></button>
+      <button class="tile" data-act="grade" data-v="10" aria-pressed="${S.grade===10}"><b>Klasse 10</b><span>Redoxreaktionen in saurer und basischer Lösung, mit Oxidationszahlen.</span></button>
+    </div>
+    ${S.grade===10?`<h2>Schreibweise in saurer Lösung</h2>
+    <div class="lab form proton" role="group" aria-label="Schreibweise in saurer Lösung">
+      <button class="neutral" data-act="proton" data-v="H3O" aria-pressed="${S.proton==='H3O'}">Oxonium-Ionen H₃O⁺</button>
+      <button class="neutral" data-act="proton" data-v="H" aria-pressed="${S.proton==='H'}">Wasserstoff-Ionen H⁺</button></div>`:''}
     <h2>Wie willst du üben?</h2>
     <div class="tiles">
       <button class="tile" data-act="mode" data-v="learn" aria-pressed="${S.mode==='learn'}"><b>Lernen</b><span>Mit Tipps, genauen Rückmeldungen und Lösungen. Ohne Zeitdruck, beliebig viele Aufgaben.</span></button>
@@ -564,37 +758,44 @@ function startHTML(){
       :`<button class="link" data-act="resetask">Bestwerte auf diesem Gerät löschen</button>`}</div>`:(S.resetDone?'<p class="reset">Bestwerte gelöscht.</p>':'')}
   </section>`;
 }
+function coefSel(id,side,i,t){
+  let o='';for(let n=1;n<=Math.max(MAXC,t.c);n++) o+=`<option value="${n}"${n===t.c?' selected':''}>${n}</option>`;
+  return `<select class="coefsel ${t.c===1?'one':''}" data-id="${id}" data-side="${side}" data-i="${i}" aria-label="Koeffizient">${o}</select>`;
+}
+function termHTML(id,side,i,t,lk){
+  if(lk) return `<span class="term ${t.sp==='e'?'is-e':''}">${t.c>1?`<span class="coef">${t.c}</span>`:''}<span class="sp">${fmt(t.sp)}</span></span>`;
+  const d=`data-id="${id}" data-side="${side}" data-i="${i}"`,chev=up=>`<svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true"><path d="${up?'M1 5L5 1L9 5':'M1 1L5 5L9 1'}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return `<span class="term ${t.sp==='e'?'is-e':''} ${t.fixed?'fixed':''}"><span class="stepper"><button class="arr ${t.c>=MAXC?'off':''}" data-arr="1" ${d} tabindex="-1" aria-hidden="true">${chev(true)}</button><button class="arr ${t.c<=1?'off':''}" data-arr="-1" ${d} tabindex="-1" aria-hidden="true">${chev(false)}</button></span><span class="coef ${t.c===1?'one':''}" role="spinbutton" tabindex="0" aria-label="Koeffizient" aria-valuenow="${t.c}" aria-valuemin="1" aria-valuemax="${MAXC}" ${d}>${t.c}</span><span class="sp">${fmt(t.sp)}</span>${t.fixed?'':`<button class="rm" data-act="rm" data-id="${id}" data-side="${side}" data-i="${i}" aria-label="Teilchen entfernen">×</button>`}</span>`;
+}
 function sideHTML(id,side){
   const b=S.b[id],lk=locked(id),act=!lk&&S.active.id===id&&S.active.side===side;
   const inner=b[side].length?b[side].map((t,i)=>(i?'<span class="plus">+</span>':'')+termHTML(id,side,i,t,lk)).join('')
     :`<span class="ph">${side==='L'?'Ausgangsstoffe':'Produkte'}</span>`;
-  return `<div class="side ${act?'active':''} ${lk?'locked':''} ${S.missing&&S.missing['side-'+id+'-'+side]?'missing':''}" ${lk?'':`data-act="side" role="button" tabindex="0"`} data-id="${id}" data-side="${side}" aria-label="${side==='L'?'Linke Seite':'Rechte Seite'}${act?', ausgewählt':''}">${inner}</div>`;
-}
-function termHTML(id,side,i,t,lk){
-  const d=`data-id="${id}" data-side="${side}" data-i="${i}"`;
-  if(lk) return `<span class="term ${t.sp==='e'?'is-e':''}">${t.c>1?`<span class="coef">${t.c}</span>`:''}<span class="sp">${fmt(t.sp)}</span></span>`;
-  const noDec=t.fixed&&t.c===1;
-  return `<span class="term ${t.sp==='e'?'is-e':''} ${t.fixed?'fixed':''}"><button class="cbtn" data-act="dec" ${d} aria-label="Koeffizient verringern" ${noDec?'disabled':''}>−</button><span class="coef ${t.c===1?'one':''}">${t.c}</span><button class="cbtn" data-act="inc" ${d} aria-label="Koeffizient erhöhen">+</button><span class="sp">${fmt(t.sp)}</span>${t.fixed?'':`<button class="rm" data-act="rm" ${d} aria-label="Teilchen entfernen">×</button>`}</span>`;
+  return `<div class="side ${act?'active':''} ${lk?'locked':''} ${S.missing['side-'+id+'-'+side]?'missing':''}" ${lk?'':`data-act="side" role="button" tabindex="0"`} data-id="${id}" data-side="${side}" aria-label="${side==='L'?'Linke Seite':'Rechte Seite'}${act?', ausgewählt':''}">${inner}</div>`;
 }
 function builderHTML(id,title,withLabel){
   const b=S.b[id],lk=locked(id);
-  const lab=withLabel?`<div class="lab ${S.missing&&S.missing['lab-'+id]?'missing':''}" role="group" aria-label="Zuordnung">
+  const lab=withLabel?`<div class="lab ${S.missing['lab-'+id]?'missing':''}" role="group" aria-label="Zuordnung">
       <button class="ox" data-act="label" data-id="${id}" data-v="ox" aria-pressed="${b.label==='ox'}" ${lk?'disabled':''}>Oxidation</button>
       <button class="red" data-act="label" data-id="${id}" data-v="red" aria-pressed="${b.label==='red'}" ${lk?'disabled':''}>Reduktion</button></div>`:'';
-  const form=(id==='g'&&S.level===1&&S.rx.salt)?`<div class="lab form" role="group" aria-label="Produkte schreiben als">
+  const form=(id==='g'&&S.grade===9&&S.level===1&&S.rx.salt)?`<div class="lab form" role="group" aria-label="Produkte schreiben als">
       <button class="neutral" data-act="form" data-v="ion" aria-pressed="${S.gForm==='ion'}" ${lk?'disabled':''}>Ionen</button>
       <button class="neutral" data-act="form" data-v="salt" aria-pressed="${S.gForm==='salt'}" ${lk?'disabled':''}>Salzformel</button></div>`:'';
   return `<div class="eq ${b.label?'is-'+b.label:''}"><div class="eqhead"><span class="t">${title}</span>${lab}${form}</div>
     <div class="eqrow">${sideHTML(id,'L')}<span class="arrow" aria-hidden="true">⟶</span>${sideHTML(id,'R')}</div></div>`;
 }
 function poolHTML(list){
-  return `<div class="pool">${list.map(sp=>`<button class="chip ${sp==='e'?'is-e':''}" data-act="add" data-sp="${sp}" aria-label="Teilchen ${sp} einsetzen">${fmt(sp)}</button>`).join('')}</div>
-  <p class="poolhint">Tippe auf ein Feld in der Gleichung, dann auf ein Teilchen. Nochmal tippen erhöht den Koeffizienten.</p>`;
+  return `<div class="pool">${list.map(sp=>`<button class="chip ${sp==='e'?'is-e':''}" data-act="add" data-sp="${sp}" aria-label="Teilchen einsetzen">${fmt(sp)}</button>`).join('')}</div>
+  <p class="poolhint">Tippe auf ein Feld in der Gleichung, dann auf ein Teilchen. Den Koeffizienten stellst du mit den Pfeilen ein. Gedrückt halten zählt schnell.</p>`;
+}
+function oxSelHTML(key,lk){
+  let o=`<option value=""${S.oxsel[key]===''?' selected':''}>?</option>`;
+  for(let n=-3;n<=7;n++) o+=`<option value="${n}"${String(n)===S.oxsel[key]?' selected':''}>${roman(n)}</option>`;
+  return `<select class="oxsel ${S.missing['oxs-'+key]?'missing':''}" data-ox="${key}" ${lk?'disabled':''} aria-label="Oxidationszahl">${o}</select>`;
 }
 function stepFooter(step){
-  const learn=S.mode==='learn',cur=S.step===step;
-  let h='';
-  if(cur){
+  const learn=S.mode==='learn';let h='';
+  if(S.step===step){
     h+=`<div class="actions"><button class="btn" data-act="check" data-v="${step}">Prüfen</button>`;
     if(learn) h+=`<button class="btn ghost" data-act="hint" data-v="${step}">Tipp</button><button class="link" data-act="reveal" data-v="${step}">Lösung zeigen</button>`;
     h+='</div>';
@@ -604,26 +805,50 @@ function stepFooter(step){
   return h;
 }
 function stepHead(step,title,intro){
-  const cls=S.done[step]?'solved':(S.step<step?'later':'');
-  return `<section class="step ${cls}" aria-disabled="${S.step<step}"><h2><span class="n">${S.done[step]?'✓':step}</span>${title}</h2>${S.step>=step?`<p class="intro">${intro}</p>`:''}`;
+  const cls=S.done[step]?'solved':(S.step<step?'later':''),disp=step+(S.grade===10?1:0);
+  return `<section class="step ${cls}"><h2><span class="n">${S.done[step]?'✓':disp}</span>${title}</h2>${S.step>=step?`<p class="intro">${intro}</p>`:''}`;
+}
+function sheetHTML(){
+  const items=S.grade===9?[
+    '<b>Oxidation</b> = Elektronenabgabe. Die Elektronen stehen rechts.',
+    '<b>Reduktion</b> = Elektronenaufnahme. Die Elektronen stehen links.',
+    'Jede Teilgleichung muss Atome <i>und</i> Ladungen ausgleichen.',
+    'Abgegebene und aufgenommene Elektronen müssen gleich viele sein: kleinstes gemeinsames Vielfaches.']:[
+    'Oxidationszahl <b>steigt</b>: Oxidation. Oxidationszahl <b>sinkt</b>: Reduktion.',
+    'Elemente: 0. In Verbindungen meist O = −II und H = +I. Die Summe ergibt die Ladung des Teilchens.',
+    `Reihenfolge: Atome des Redox-Elements, dann Elektronen, dann Ladung mit ${fmt(PK())} (sauer) bzw. ${fmt('OH^-')} (basisch), zuletzt ${H2O}.`,
+    'In der Gesamtgleichung kürzt du die Elektronen und alles andere, was auf beiden Seiten steht.'];
+  return `<details class="sheet"><summary>Spickzettel</summary><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul></details>`;
 }
 function taskHTML(){
-  const {rx,sol}=S,learn=S.mode==='learn';
+  const {rx,sol}=S,learn=S.mode==='learn',g10=S.grade===10;
   const stats=learn?`<div class="stats"><span>Aufgabe <b>${S.idx+1}</b></span></div>`
     :`<div class="stats"><span>Aufgabe <b>${S.idx+1}</b> von ${S.tasks.length}</span><span><b>${S.points}</b> Punkte</span><span id="timer">${clock(Date.now()-S.t0)}</span></div>`;
-  let h=`<header class="bar"><button class="link" data-act="home">Zur Übersicht</button><span class="where">${learn?'Lernen':'Challenge'}, ${LEVELS[S.level].name}</span>${stats}</header>`;
-  h+=`<p class="ctx">${rx.text}</p>`;
-  if(learn) h+=`<details class="sheet"><summary>Spickzettel</summary><ul>
-    <li><b>Oxidation</b> = Elektronenabgabe. Die Elektronen stehen rechts.</li>
-    <li><b>Reduktion</b> = Elektronenaufnahme. Die Elektronen stehen links.</li>
-    <li>Jede Teilgleichung muss Atome <i>und</i> Ladungen ausgleichen.</li>
-    <li>Abgegebene und aufgenommene Elektronen müssen gleich viele sein: kleinstes gemeinsames Vielfaches.</li></ul></details>`;
-  // Schritt 1
-  h+=stepHead(1,'Teilgleichungen aufstellen und zuordnen',S.level===1?'Ergänze Elektronen und Koeffizienten. Ordne dann jede Teilgleichung zu.':'Baue beide Teilgleichungen aus den Teilchen. Ordne dann jede zu.');
-  h+=builderHTML('t0','Teilgleichung 1',true)+builderHTML('t1','Teilgleichung 2',true);
-  if(S.step===1) h+=poolHTML(S.pool1);
-  h+=stepFooter(1)+'</section>';
-  // Schritt 2
+  let h=`<header class="bar"><button class="link" data-act="home">Zur Übersicht</button><span class="where">${learn?'Lernen':'Challenge'}, Klasse ${S.grade}, ${LEVELS[S.grade][S.level].name}</span>${stats}</header>`;
+  const showF=g10||S.level===1;
+  const fl=g10?[uniq([rx.red.R,rx.ox.R]),uniq([rx.red.P,rx.ox.P])]:[[rx.m,rx.o],[rx.mP,rx.oP]];
+  h+=`<section class="taskcard" aria-label="Aufgabe">
+    <div class="tc-top"><span class="tc-label">Aufgabe ${S.idx+1}${learn?'':' von '+S.tasks.length}</span>${g10?`<span class="medium">${rx.med==='acid'?'Saure Lösung':'Basische Lösung'}</span>`:''}</div>
+    <h2 class="tc-title">${TITLES[rx.id]||''}</h2>
+    ${showF?`<p class="tc-formula">${fl[0].map(fmt).join(' + ')} <span class="tc-arrow">⟶</span> ${fl[1].map(fmt).join(' + ')}</p>`:''}
+    <p class="tc-text">${rx.text}</p></section>`;
+  if(learn) h+=sheetHTML();
+  if(g10){
+    h+=stepHead(0,'Oxidationszahlen bestimmen','Bestimme für jedes Redoxpaar die Oxidationszahl des Elements, das sich verändert.');
+    h+='<div class="oxgrid">'+S.pairOrder.map((k,i)=>{const p=rx[k],lk=S.step!==0;
+      return `<div class="oxrow"><span class="t">Redoxpaar ${i+1}</span><span class="pair"><span class="x">${p.x}</span> in <span class="sp">${fmt(p.R)}</span> ${oxSelHTML(k+'-R',lk)}</span><span class="ar" aria-hidden="true">⟶</span><span class="pair"><span class="x">${p.x}</span> in <span class="sp">${fmt(p.P)}</span> ${oxSelHTML(k+'-P',lk)}</span></div>`;}).join('')+'</div>';
+    h+=stepFooter(0)+'</section>';
+  }
+  const intro1=g10?(S.level<3?`Die Redoxpaare stehen schon da. Ergänze Elektronen, ${fmt(medIon())}, ${H2O} und die Koeffizienten. Ordne dann jede Teilgleichung zu.`
+      :'Baue beide Teilgleichungen selbst und wähle die Ausgleichsteilchen, die zur Lösung passen. Ordne dann jede zu.')
+    :(S.level===1?'Ergänze Elektronen und Koeffizienten. Ordne dann jede Teilgleichung zu.':'Baue beide Teilgleichungen aus den Teilchen. Ordne dann jede zu.');
+  h+=stepHead(1,'Teilgleichungen aufstellen und zuordnen',intro1);
+  if(S.step>=1){
+    h+=builderHTML('t0','Teilgleichung 1',true)+builderHTML('t1','Teilgleichung 2',true);
+    if(S.step===1) h+=poolHTML(S.pool1);
+    h+=stepFooter(1);
+  }
+  h+='</section>';
   h+=stepHead(2,'Elektronen ausgleichen','Mit welchem Faktor musst du jede Teilgleichung multiplizieren, damit gleich viele Elektronen abgegeben wie aufgenommen werden?');
   if(S.step>=2){
     const dis=S.step>2?'disabled':'';
@@ -633,8 +858,9 @@ function taskHTML(){
     h+=stepFooter(2);
   }
   h+='</section>';
-  // Schritt 3
-  h+=stepHead(3,'Gesamtgleichung aufstellen','Addiere die Teilgleichungen mit ihren Faktoren und kürze die Elektronen heraus.'+(S.level===1&&S.rx.salt?' Oben rechts wählst du, ob du die Produkte als Ionen oder als Salzformel schreibst.':''));
+  h+=stepHead(3,'Gesamtgleichung aufstellen','Addiere die Teilgleichungen mit ihren Faktoren und kürze die Elektronen heraus.'
+    +(g10?' Kürze danach alles, was auf beiden Seiten steht.':'')
+    +(!g10&&S.level===1&&rx.salt?' Oben rechts wählst du, ob du die Produkte als Ionen oder als Salzformel schreibst.':''));
   if(S.step>=3){
     h+=builderHTML('g','Gesamtgleichung',false);
     if(!S.done[3]) h+=poolHTML(S.pool3);
@@ -652,7 +878,7 @@ function taskHTML(){
 function endHTML(){
   const max=S.tasks.length*100,pct=S.points/max;
   const verdict=pct>=.9?'Stark. Die Elektronen-Buchhaltung sitzt.':pct>=.6?'Solide. Schau dir die Schritte an, bei denen du Punkte verloren hast, und übe sie im Lernmodus.':'Da geht noch mehr. Übe im Lernmodus mit Tipps und versuch es dann erneut.';
-  return `<header class="bar"><button class="link" data-act="home">Zur Übersicht</button><span class="where">Challenge, ${LEVELS[S.level].name}</span></header>
+  return `<header class="bar"><button class="link" data-act="home">Zur Übersicht</button><span class="where">Challenge, Klasse ${S.grade}, ${LEVELS[S.grade][S.level].name}</span></header>
   <p class="score">${S.points}<small> von ${max} Punkten</small></p>
   <p class="endtxt">Zeit: ${clock(S.time)}. ${verdict}</p>
   <p class="endtxt">${S.newBest?'Neuer Bestwert auf diesem Gerät.':`Dein Bestwert: ${S.prevBest.p} Punkte in ${clock(S.prevBest.t)}.`}</p>
@@ -661,9 +887,12 @@ function endHTML(){
 
 // ---------- Ereignisse ----------
 $app.addEventListener('click',e=>{
+  if(e.target.closest('select')||e.target.closest('.arr')) return;
   const el=e.target.closest('[data-act]');if(!el) return;
   const a=el.dataset.act,v=el.dataset.v;
-  if(a==='mode'){S.mode=v;render();}
+  if(a==='grade'){S.grade=+v;render();}
+  else if(a==='proton'){S.proton=v;try{localStorage.setItem('redox-werkstatt-proton',v);}catch(err){}render();}
+  else if(a==='mode'){S.mode=v;render();}
   else if(a==='level'){S.level=+v;render();}
   else if(a==='start'){startSession();}
   else if(a==='home'){stopTimer();S.screen='start';render();}
@@ -671,28 +900,23 @@ $app.addEventListener('click',e=>{
   else if(a==='tolearn'){S.mode='learn';startSession();}
   else if(a==='resetask'){S.confirmReset=true;S.resetDone=false;render();}
   else if(a==='resetno'){S.confirmReset=false;render();}
-  else if(a==='resetyes'){try{localStorage.removeItem('redox-werkstatt-hs-v2');}catch(e){}S.confirmReset=false;S.resetDone=true;render();}
+  else if(a==='resetyes'){try{localStorage.removeItem(HS_KEY);}catch(err){}S.confirmReset=false;S.resetDone=true;render();}
   else if(a==='side'){S.active={id:el.dataset.id,side:el.dataset.side};render();}
   else if(a==='add'){
     const ac=S.active;if(!ac||locked(ac.id)) return;
     const list=S.b[ac.id][ac.side],t=list.find(t=>t.sp===el.dataset.sp);
-    if(t) t.c=Math.min(12,t.c+1); else list.push({sp:el.dataset.sp,c:1});
-    delete S.missing['side-'+ac.id+'-'+ac.side];
-    render();
+    if(t) t.c=Math.min(MAXC,t.c+1); else list.push({sp:el.dataset.sp,c:1});
+    delete S.missing['side-'+ac.id+'-'+ac.side];render();
   }
-  else if(a==='inc'||a==='dec'||a==='rm'){
+  else if(a==='rm'){
     const {id,side}=el.dataset,i=+el.dataset.i;if(locked(id)) return;
-    const list=S.b[id][side];
-    if(a==='inc') list[i].c=Math.min(12,list[i].c+1);
-    else if(a==='dec'){if(list[i].c>1) list[i].c--; else if(!list[i].fixed) list.splice(i,1);}
-    else if(!list[i].fixed) list.splice(i,1);
+    const list=S.b[id][side];if(!list[i].fixed) list.splice(i,1);
     S.active={id,side};render();
   }
   else if(a==='form'){
     if(locked('g')||S.gForm===v) return;
-    const rx=S.rx;S.gForm=v;
-    S.b.g.R=v==='salt'?[{sp:rx.salt,c:1,fixed:true}]:[{sp:rx.mP,c:1,fixed:true},{sp:rx.oP,c:1,fixed:true}];
-    render();
+    const rx=S.rx,fx=sp=>({sp,c:1,fixed:true});S.gForm=v;
+    S.b.g.R=v==='salt'?[fx(rx.salt)]:[fx(rx.mP),fx(rx.oP)];render();
   }
   else if(a==='label'){const b=S.b[el.dataset.id];b.label=b.label===v?null:v;delete S.missing['lab-'+el.dataset.id];render();}
   else if(a==='check'){check(+v);}
@@ -700,11 +924,45 @@ $app.addEventListener('click',e=>{
   else if(a==='reveal'){reveal(+v);}
   else if(a==='next'){nextTask();}
 });
+function stepCoef(el,dir){
+  const {id,side}=el.dataset,i=+el.dataset.i;if(locked(id)) return false;
+  const t=S.b[id][side][i],n=Math.min(MAXC,Math.max(1,t.c+dir));if(n===t.c) return false;t.c=n;return true;
+}
+function paintCoef(el){
+  const t=S.b[el.dataset.id][el.dataset.side][+el.dataset.i],term=el.closest('.term'),c=term.querySelector('.coef');
+  c.textContent=t.c;c.classList.toggle('one',t.c===1);c.setAttribute('aria-valuenow',t.c);
+  term.querySelector('[data-arr="1"]').classList.toggle('off',t.c>=MAXC);term.querySelector('[data-arr="-1"]').classList.toggle('off',t.c<=1);
+}
+let hold=null;
+$app.addEventListener('pointerdown',e=>{
+  const el=e.target.closest('.arr');if(!el) return;
+  e.preventDefault();const dir=+el.dataset.arr;
+  if(stepCoef(el,dir)) paintCoef(el);
+  S.active={id:el.dataset.id,side:el.dataset.side};
+  hold={t:setTimeout(function rep(){if(stepCoef(el,dir)) paintCoef(el);hold.t=setTimeout(rep,75);},420)};
+  try{el.setPointerCapture(e.pointerId);}catch(err){}
+});
+const endHold=()=>{if(!hold) return;clearTimeout(hold.t);hold=null;render();};
+$app.addEventListener('pointerup',endHold);$app.addEventListener('pointercancel',endHold);
+$app.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.matches('select.coefsel')){
+    const {id,side}=t.dataset,i=+t.dataset.i;if(locked(id)) return;
+    S.b[id][side][i].c=parseInt(t.value,10);S.active={id,side};render();
+  }else if(t.matches('select[data-ox]')){
+    S.oxsel[t.dataset.ox]=t.value;delete S.missing['oxs-'+t.dataset.ox];t.classList.remove('missing');
+  }
+});
 $app.addEventListener('keydown',e=>{
   const el=e.target.closest('.side[data-act]');
-  if(el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();S.active={id:el.dataset.id,side:el.dataset.side};render();
+  if(el&&e.target===el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();S.active={id:el.dataset.id,side:el.dataset.side};render();
     const again=$app.querySelector(`.side[data-id="${el.dataset.id}"][data-side="${el.dataset.side}"]`);if(again) again.focus();}
   if(e.target.matches('input[data-f]')&&e.key==='Enter'){e.preventDefault();check(2);}
+  if(e.target.matches('.coef[role="spinbutton"]')&&['ArrowUp','ArrowDown'].includes(e.key)){
+    e.preventDefault();const c=e.target;
+    if(stepCoef(c,e.key==='ArrowUp'?1:-1)){S.active={id:c.dataset.id,side:c.dataset.side};render();
+      const again=$app.querySelector(`.coef[data-id="${c.dataset.id}"][data-side="${c.dataset.side}"][data-i="${c.dataset.i}"]`);if(again) again.focus();}
+  }
 });
 $app.addEventListener('input',e=>{if(e.target.matches('input[data-f]')){S.fac[e.target.dataset.f]=e.target.value;delete S.missing[e.target.dataset.f];e.target.classList.remove('missing');}});
 
