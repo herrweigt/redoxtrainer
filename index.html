@@ -208,6 +208,31 @@ details.sheet ul{margin:.5rem 0 .3rem;padding-left:1.2rem}
 .slot:disabled{cursor:default}
 .slot.missing{outline:3px solid var(--e);outline-offset:2px;background:var(--e-soft)}
 .oxlab{font-weight:700;color:var(--muted);min-width:1.6rem;text-align:right}
+/* Markieren im Text */
+:root{--pa:#2B5FD9;--pa-soft:#DDE7FC;--pb:#C2560C;--pb-soft:#FBE5D4}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--pa:#7FA6FF;--pa-soft:#1C2B4D;--pb:#FF9D5C;--pb-soft:#3E2616}}
+:root[data-theme="dark"]{--pa:#7FA6FF;--pa-soft:#1C2B4D;--pb:#FF9D5C;--pb-soft:#3E2616}
+.w{border-radius:4px;padding:.05em .1em}
+.w[data-act]{cursor:pointer}
+.w[data-act]:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.w.m-A{background:var(--pa-soft);box-shadow:inset 0 -3px 0 var(--pa)}
+.w.m-B{background:linear-gradient(90deg,var(--pb) 60%,transparent 60%) repeat-x 0 100%/8px 3px,var(--pb-soft)}
+.mtools{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.9rem;padding-top:.8rem;border-top:1px dashed var(--line)}
+.mcol{border:2px solid var(--line);background:var(--panel);border-radius:999px;padding:.4rem .95rem;font-weight:700;display:inline-flex;gap:.5rem;align-items:center}
+.mcol .dot{width:.95rem;height:.95rem;border-radius:50%}
+.mcol.A .dot{background:var(--pa)} .mcol.B .dot{background:var(--pb)}
+.mcol[aria-pressed="true"].A{border-color:var(--pa);box-shadow:0 0 0 3px var(--pa-soft)}
+.mcol[aria-pressed="true"].B{border-color:var(--pb);box-shadow:0 0 0 3px var(--pb-soft)}
+.mcol.missing{outline:3px solid var(--e);outline-offset:2px}
+.mhint{color:var(--muted);font-size:.9rem;flex-basis:100%}
+.oxrow.pa{border-left:6px solid var(--pa)} .oxrow.pb{border-left:6px solid var(--pb)}
+.pchip{display:inline-block;padding:0 .55rem;border-radius:999px;font-weight:700;color:var(--bg);font-size:.9rem}
+.pchip.pa{background:var(--pa)} .pchip.pb{background:var(--pb)}
+.w.pj{box-shadow:inset 1px 0 0 var(--muted);margin-left:1px}
+.w.pj.m-A{box-shadow:inset 1px 0 0 var(--muted),inset 0 -3px 0 var(--pa)}
+.tc-task{margin:.8rem 0 0;padding:.6rem .8rem;border-radius:10px;background:var(--bg);font-size:1.02rem}
+.taskcard .mtools{margin:.6rem 0 .2rem;padding:0;border-top:0}
+.taskcard .mtools + .tc-text{margin-top:.9rem;padding-top:.8rem;border-top:1px dashed var(--line)}
 </style>
 </head>
 <body>
@@ -318,50 +343,50 @@ function solve10(rx,pk){
 }
 const MNO4={R:'MnO4^-',P:'Mn2+',x:'Mn'},MNO4B={R:'MnO4^-',P:'MnO2',x:'Mn'};
 const REACTIONS10=[
-  {id:'mn-fe',lvl:1,med:'acid',red:MNO4,ox:{R:'Fe2+',P:'Fe3+',x:'Fe'},text:'Violette Kaliumpermanganat-Lösung wird in schwefelsaure Eisen(II)-sulfat-Lösung getropft und entfärbt sich. Es entstehen Mangan(II)- und Eisen(III)-Ionen.'},
-  {id:'mn-ox',lvl:1,med:'acid',red:MNO4,ox:{R:'C2O4^2-',P:'CO2',x:'C'},text:'Oxalat-Ionen entfärben saure Permanganat-Lösung. Dabei entstehen Mangan(II)-Ionen und Kohlenstoffdioxid. Diese Reaktion wird bei Titrationen genutzt.'},
-  {id:'mn-h2o2',lvl:1,med:'acid',red:MNO4,ox:{R:'H2O2',P:'O2',x:'O'},text:'Saure Permanganat-Lösung wird mit Wasserstoffperoxid versetzt. Die Lösung entfärbt sich, weil Mangan(II)-Ionen entstehen, und es perlt Sauerstoff.'},
-  {id:'cr-i',lvl:1,med:'acid',red:{R:'Cr2O7^2-',P:'Cr3+',x:'Cr'},ox:{R:'I-',P:'I2',x:'I'},text:'Orange Dichromat-Lösung oxidiert in saurer Lösung Iodid-Ionen zu Iod. Es entstehen grüne Chrom(III)-Ionen.'},
-  {id:'cu-no3',lvl:1,med:'acid',ox:{R:'Cu',P:'Cu2+',x:'Cu'},red:{R:'NO3^-',P:'NO',x:'N'},text:'Kupfer löst sich in verdünnter Salpetersäure. Dabei entstehen Kupfer(II)-Ionen und farbloses Stickstoffmonooxid NO.'},
-  {id:'h2o2-i',lvl:1,med:'acid',red:{R:'H2O2',P:'H2O',x:'O'},ox:{R:'I-',P:'I2',x:'I'},text:'Wasserstoffperoxid oxidiert Iodid-Ionen in saurer Lösung zu Iod, die Lösung färbt sich braun. Aus dem Wasserstoffperoxid entsteht dabei Wasser.'},
-  {id:'mn-so3',lvl:1,med:'acid',red:MNO4,ox:{R:'SO3^2-',P:'SO4^2-',x:'S'},text:'Sulfit-Ionen werden von saurer Permanganat-Lösung zu Sulfat-Ionen oxidiert. Es entstehen Mangan(II)-Ionen.'},
-  {id:'mn-so3-b',lvl:2,med:'base',red:MNO4B,ox:{R:'SO3^2-',P:'SO4^2-',x:'S'},text:'In basischer Lösung oxidiert Permanganat Sulfit-Ionen zu Sulfat-Ionen. Dabei fällt brauner Braunstein MnO₂ aus.'},
-  {id:'cl-dis',lvl:2,med:'base',ox:{R:'Cl2',P:'ClO^-',x:'Cl'},red:{R:'Cl2',P:'Cl-',x:'Cl'},text:'Chlor wird in Natronlauge eingeleitet. Es entsteht Bleichlauge mit Hypochlorit-Ionen ClO⁻ und Chlorid-Ionen. Chlor wird dabei gleichzeitig oxidiert und reduziert.'},
-  {id:'fe-oh',lvl:2,med:'base',ox:{R:'Fe(OH)2',P:'Fe(OH)3',x:'Fe'},red:{R:'O2',P:'OH^-',x:'O'},text:'Grünliches Eisen(II)-hydroxid färbt sich an der Luft durch Sauerstoff rotbraun: Es entsteht Eisen(III)-hydroxid. Aus dem Sauerstoff entstehen Hydroxid-Ionen. So beginnt Rost.'},
-  {id:'mn-h2o2-b',lvl:2,med:'base',red:MNO4B,ox:{R:'H2O2',P:'O2',x:'O'},text:'Wasserstoffperoxid reagiert mit Permanganat in basischer Lösung. Es perlt Sauerstoff, und Braunstein MnO₂ fällt aus.'},
-  {id:'mn-i-b',lvl:2,med:'base',red:MNO4B,ox:{R:'I-',P:'IO3^-',x:'I'},text:'In basischer Lösung oxidiert Permanganat Iodid-Ionen bis zu Iodat-Ionen IO₃⁻. Braunstein MnO₂ fällt aus.'},
-  {id:'clo-i',lvl:2,med:'base',red:{R:'ClO^-',P:'Cl-',x:'Cl'},ox:{R:'I-',P:'I2',x:'I'},text:'Hypochlorit-Ionen aus Chlorreiniger setzen in basischer Lösung aus Iodid-Ionen Iod frei. Es entstehen Chlorid-Ionen.'}
+  {id:'mn-fe',lvl:1,med:'acid',red:MNO4,ox:{R:'Fe2+',P:'Fe3+',x:'Fe'},text:'Violette#ro Kalium#z|permanganat-Lösung#rR wird in schwefelsaure Eisen(II)-#oR|sulfat-Lösung#z getropft und entfärbt#ro sich. Es entstehen Mangan(II)-#rP und Eisen(III)-Ionen#oP.'},
+  {id:'mn-ox',lvl:1,med:'acid',red:MNO4,ox:{R:'C2O4^2-',P:'CO2',x:'C'},text:'Oxalat-Ionen#oR entfärben#ro saure Permanganat-Lösung#rR. Dabei entstehen Mangan(II)-Ionen#rP und Kohlenstoffdioxid#oP. Diese Reaktion wird bei Titrationen genutzt.'},
+  {id:'mn-h2o2',lvl:1,med:'acid',red:MNO4,ox:{R:'H2O2',P:'O2',x:'O'},text:'Saure Permanganat-Lösung#rR wird mit Wasserstoffperoxid#oR versetzt. Die Lösung entfärbt#ro sich, weil Mangan(II)-Ionen#rP entstehen, und es perlt#oo Sauerstoff#oP.'},
+  {id:'cr-i',lvl:1,med:'acid',red:{R:'Cr2O7^2-',P:'Cr3+',x:'Cr'},ox:{R:'I-',P:'I2',x:'I'},text:'Orange#ro Dichromat-Lösung#rR oxidiert in saurer Lösung Iodid-Ionen#oR zu Iod#oP. Es entstehen grüne#ro Chrom(III)-Ionen#rP.'},
+  {id:'cu-no3',lvl:1,med:'acid',ox:{R:'Cu',P:'Cu2+',x:'Cu'},red:{R:'NO3^-',P:'NO',x:'N'},text:'Kupfer#oR löst sich in verdünnter Salpetersäure#rR. Dabei entstehen Kupfer(II)-Ionen#oP und farbloses#ro Stickstoffmonooxid#rP.'},
+  {id:'h2o2-i',lvl:1,med:'acid',red:{R:'H2O2',P:'H2O',x:'O'},ox:{R:'I-',P:'I2',x:'I'},text:'Wasserstoffperoxid#rR oxidiert Iodid-Ionen#oR in saurer Lösung zu Iod#oP, die Lösung färbt sich braun#oo. Aus dem Wasserstoffperoxid#rR entsteht dabei Wasser#rP.'},
+  {id:'mn-so3',lvl:1,med:'acid',red:MNO4,ox:{R:'SO3^2-',P:'SO4^2-',x:'S'},text:'Sulfit-Ionen#oR werden von saurer Permanganat-Lösung#rR zu Sulfat-Ionen#oP oxidiert. Es entstehen Mangan(II)-Ionen#rP.'},
+  {id:'mn-so3-b',lvl:2,med:'base',red:MNO4B,ox:{R:'SO3^2-',P:'SO4^2-',x:'S'},text:'In basischer Lösung oxidiert Permanganat#rR Sulfit-Ionen#oR zu Sulfat-Ionen#oP. Dabei fällt brauner#ro Braunstein#rP (Mangan(IV)-oxid#rP) aus.'},
+  {id:'cl-dis',lvl:2,med:'base',ox:{R:'Cl2',P:'ClO^-',x:'Cl'},red:{R:'Cl2',P:'Cl-',x:'Cl'},text:'Chlor#bR wird in Natronlauge eingeleitet. Es entsteht Bleichlauge#f mit Hypochlorit-Ionen#oP und Chlorid-Ionen#rP. Chlor#bR wird dabei gleichzeitig oxidiert und reduziert.'},
+  {id:'fe-oh',lvl:2,med:'base',ox:{R:'Fe(OH)2',P:'Fe(OH)3',x:'Fe'},red:{R:'O2',P:'OH^-',x:'O'},text:'Grünliches#oo Eisen(II)-hydroxid#oR färbt sich an der Luft#ro durch Sauerstoff#rR rotbraun#oo: Es entsteht Eisen(III)-hydroxid#oP. Aus dem Sauerstoff#rR entstehen Hydroxid-Ionen#rP. So beginnt Rost#oo.'},
+  {id:'mn-h2o2-b',lvl:2,med:'base',red:MNO4B,ox:{R:'H2O2',P:'O2',x:'O'},text:'Wasserstoffperoxid#oR reagiert mit Permanganat#rR in basischer Lösung. Es perlt#oo Sauerstoff#oP, und Braunstein#rP (Mangan(IV)-oxid#rP) fällt aus.'},
+  {id:'mn-i-b',lvl:2,med:'base',red:MNO4B,ox:{R:'I-',P:'IO3^-',x:'I'},text:'In basischer Lösung oxidiert Permanganat#rR Iodid-Ionen#oR bis zu Iodat-Ionen#oP. Braunstein#rP (Mangan(IV)-oxid#rP) fällt aus.'},
+  {id:'clo-i',lvl:2,med:'base',red:{R:'ClO^-',P:'Cl-',x:'Cl'},ox:{R:'I-',P:'I2',x:'I'},text:'Hypochlorit-Ionen#rR aus Chlorreiniger#f setzen in basischer Lösung aus Iodid-Ionen#oR Iod#oP frei. Es entstehen Chlorid-Ionen#rP.'}
 ];
 
 const REACTIONS=[
   // Stufe 1
-  {id:'zn-cu',lvl:1,m:'Zn',mP:'Zn2+',o:'Cu2+',oP:'Cu',text:'Ein Zinkblech wird in blaue Kupfer(II)-sulfat-Lösung getaucht. Auf dem Blech scheidet sich rotbraunes Kupfer ab.'},
-  {id:'fe-cu',lvl:1,m:'Fe',mP:'Fe2+',o:'Cu2+',oP:'Cu',text:'Ein Eisennagel liegt in Kupfer(II)-sulfat-Lösung. Er überzieht sich mit Kupfer, dabei gehen Eisen(II)-Ionen in Lösung.'},
-  {id:'mg-zn',lvl:1,m:'Mg',mP:'Mg2+',o:'Zn2+',oP:'Zn',text:'Magnesiumspäne werden in Zinksulfat-Lösung gegeben. Auf den Spänen bildet sich ein grauer Zinküberzug.'},
-  {id:'mg-cl',lvl:1,m:'Mg',mP:'Mg2+',o:'Cl2',oP:'Cl-',salt:'MgCl2',text:'Ein brennendes Magnesiumband wird in einen Standzylinder mit Chlorgas gehalten. Es entsteht weißes Magnesiumchlorid.'},
-  {id:'zn-s',lvl:1,m:'Zn',mP:'Zn2+',o:'S',oP:'S2-',salt:'ZnS',text:'Ein Gemisch aus Zinkpulver und Schwefel reagiert nach dem Zünden heftig zu Zinksulfid.'},
-  {id:'fe-s',lvl:1,m:'Fe',mP:'Fe2+',o:'S',oP:'S2-',salt:'FeS',text:'Eisenpulver und Schwefel glühen nach kurzem Erhitzen von selbst weiter. Es entsteht Eisen(II)-sulfid.'},
-  {id:'na-cl',lvl:1,m:'Na',mP:'Na+',o:'Cl2',oP:'Cl-',salt:'NaCl',text:'Natrium verbrennt in Chlorgas mit gelber Flamme zu Natriumchlorid, also Kochsalz.'},
-  {id:'cu-ag',lvl:1,m:'Cu',mP:'Cu2+',o:'Ag+',oP:'Ag',text:'Ein Kupferdraht hängt in Silbernitrat-Lösung. Es wächst ein glitzernder „Silberbaum“, und die Lösung färbt sich durch Kupfer(II)-Ionen blau.'},
+  {id:'zn-cu',lvl:1,m:'Zn',mP:'Zn2+',o:'Cu2+',oP:'Cu',text:'Ein Zinkblech#oR wird in blaue#ro Kupfer(II)-#rR|sulfat-Lösung#z getaucht. Auf dem Blech scheidet sich rotbraunes#ro Kupfer#rP ab, und Zink-Ionen#oP gehen in Lösung.'},
+  {id:'fe-cu',lvl:1,m:'Fe',mP:'Fe2+',o:'Cu2+',oP:'Cu',text:'Ein Eisennagel#oR liegt in Kupfer(II)-#rR|sulfat-Lösung#z. Er überzieht sich mit Kupfer#rP, dabei gehen Eisen(II)-Ionen#oP in Lösung.'},
+  {id:'mg-zn',lvl:1,m:'Mg',mP:'Mg2+',o:'Zn2+',oP:'Zn',text:'Magnesiumspäne#oR werden in Zink#rR|sulfat-Lösung#z gegeben. Auf den Spänen bildet sich ein grauer#ro Zinküberzug#rP, und Magnesium-Ionen#oP gehen in Lösung.'},
+  {id:'mg-cl',lvl:1,m:'Mg',mP:'Mg2+',o:'Cl2',oP:'Cl-',salt:'MgCl2',text:'Ein brennendes Magnesiumband#oR wird in einen Standzylinder mit Chlorgas#rR gehalten. Es entsteht weißes Magnesium#oP|chlorid#rP.'},
+  {id:'zn-s',lvl:1,m:'Zn',mP:'Zn2+',o:'S',oP:'S2-',salt:'ZnS',text:'Ein Gemisch aus Zinkpulver#oR und Schwefel#rR reagiert nach dem Zünden heftig zu Zink#oP|sulfid#rP.'},
+  {id:'fe-s',lvl:1,m:'Fe',mP:'Fe2+',o:'S',oP:'S2-',salt:'FeS',text:'Eisenpulver#oR und Schwefel#rR glühen nach kurzem Erhitzen von selbst weiter. Es entsteht Eisen(II)-#oP|sulfid#rP.'},
+  {id:'na-cl',lvl:1,m:'Na',mP:'Na+',o:'Cl2',oP:'Cl-',salt:'NaCl',text:'Natrium#oR verbrennt in Chlorgas#rR mit gelber Flamme zu Natrium#oP|chlorid#rP, also Kochsalz#f.'},
+  {id:'cu-ag',lvl:1,m:'Cu',mP:'Cu2+',o:'Ag+',oP:'Ag',text:'Ein Kupferdraht#oR hängt in Silber#rR|nitrat-Lösung#z. Es wächst ein glitzernder „Silberbaum#rP“, und die Lösung färbt sich durch Kupfer(II)-Ionen#oP blau#oo.'},
   // Stufe 2
-  {id:'mg-o',lvl:2,m:'Mg',mP:'Mg2+',o:'O2',oP:'O2-',salt:'MgO',text:'Magnesium verbrennt mit grellweißem Licht zu Magnesiumoxid. Deshalb steckt es in Wunderkerzen und Feuerwerk.'},
-  {id:'ca-o',lvl:2,m:'Ca',mP:'Ca2+',o:'O2',oP:'O2-',salt:'CaO',text:'Frisch angeschnittenes Calcium reagiert an der Luft mit Sauerstoff zu Calciumoxid.'},
-  {id:'k-br',lvl:2,m:'K',mP:'K+',o:'Br2',oP:'Br-',salt:'KBr',text:'Kalium reagiert sehr heftig mit Brom zu Kaliumbromid.'},
-  {id:'li-o',lvl:2,m:'Li',mP:'Li+',o:'O2',oP:'O2-',salt:'Li2O',text:'Lithium, das Metall aus Akkus, reagiert mit Sauerstoff zu Lithiumoxid.'},
-  {id:'zn-ag',lvl:2,m:'Zn',mP:'Zn2+',o:'Ag+',oP:'Ag',text:'Ein Zinkblech steht in Silbernitrat-Lösung. Silber scheidet sich ab, Zink-Ionen gehen in Lösung.'},
-  {id:'mg-ag',lvl:2,m:'Mg',mP:'Mg2+',o:'Ag+',oP:'Ag',text:'Ein Magnesiumband in Silbernitrat-Lösung überzieht sich mit Silber. Magnesium-Ionen gehen in Lösung.'},
-  {id:'na-s',lvl:2,m:'Na',mP:'Na+',o:'S',oP:'S2-',salt:'Na2S',text:'Natrium und Schwefel reagieren zu Natriumsulfid.'},
-  {id:'ca-cl',lvl:2,m:'Ca',mP:'Ca2+',o:'Cl2',oP:'Cl-',salt:'CaCl2',text:'Calcium reagiert mit Chlorgas zu Calciumchlorid, einem Salz, das im Winter auch als Streusalz dient.'},
+  {id:'mg-o',lvl:2,m:'Mg',mP:'Mg2+',o:'O2',oP:'O2-',salt:'MgO',text:'Magnesium#oR verbrennt mit dem Sauerstoff#rR der Luft#ro mit grellweißem Licht zu Magnesium#oP|oxid#rP. Deshalb steckt es in Wunderkerzen und Feuerwerk.'},
+  {id:'ca-o',lvl:2,m:'Ca',mP:'Ca2+',o:'O2',oP:'O2-',salt:'CaO',text:'Frisch angeschnittenes Calcium#oR reagiert an der Luft#ro mit Sauerstoff#rR zu Calcium#oP|oxid#rP.'},
+  {id:'k-br',lvl:2,m:'K',mP:'K+',o:'Br2',oP:'Br-',salt:'KBr',text:'Kalium#oR reagiert sehr heftig mit Brom#rR zu Kalium#oP|bromid#rP.'},
+  {id:'li-o',lvl:2,m:'Li',mP:'Li+',o:'O2',oP:'O2-',salt:'Li2O',text:'Lithium#oR, das Metall aus Akkus, reagiert mit Sauerstoff#rR zu Lithium#oP|oxid#rP.'},
+  {id:'zn-ag',lvl:2,m:'Zn',mP:'Zn2+',o:'Ag+',oP:'Ag',text:'Ein Zinkblech#oR steht in Silber#rR|nitrat-Lösung#z. Silber#rP scheidet sich ab, Zink-Ionen#oP gehen in Lösung.'},
+  {id:'mg-ag',lvl:2,m:'Mg',mP:'Mg2+',o:'Ag+',oP:'Ag',text:'Ein Magnesiumband#oR in Silber#rR|nitrat-Lösung#z überzieht sich mit Silber#rP. Magnesium-Ionen#oP gehen in Lösung.'},
+  {id:'na-s',lvl:2,m:'Na',mP:'Na+',o:'S',oP:'S2-',salt:'Na2S',text:'Natrium#oR und Schwefel#rR reagieren zu Natrium#oP|sulfid#rP.'},
+  {id:'ca-cl',lvl:2,m:'Ca',mP:'Ca2+',o:'Cl2',oP:'Cl-',salt:'CaCl2',text:'Calcium#oR reagiert mit Chlorgas#rR zu Calcium#oP|chlorid#rP, einem Salz, das im Winter auch als Streusalz#f dient.'},
   // Stufe 3
-  {id:'al-cl',lvl:3,m:'Al',mP:'Al3+',o:'Cl2',oP:'Cl-',salt:'AlCl3',distract:['Cl','Al2+','AlCl2'],text:'Aluminiumfolie glüht in Chlorgas auf. Es entsteht Aluminiumchlorid.'},
-  {id:'al-o',lvl:3,m:'Al',mP:'Al3+',o:'O2',oP:'O2-',salt:'Al2O3',distract:['O','O-','AlO'],text:'Aluminium überzieht sich an der Luft sofort mit einer dünnen, schützenden Schicht aus Aluminiumoxid.'},
-  {id:'fe-cl',lvl:3,m:'Fe',mP:'Fe3+',o:'Cl2',oP:'Cl-',salt:'FeCl3',distract:['Fe2+','Cl','FeCl2'],text:'Glühende Eisenwolle reagiert mit Chlorgas. Es entsteht Eisen(III)-chlorid.'},
-  {id:'al-cu',lvl:3,m:'Al',mP:'Al3+',o:'Cu2+',oP:'Cu',distract:['Cu+','Al+'],text:'Aluminiumfolie in Kupfer(II)-chlorid-Lösung löst sich auf, rotbraunes Kupfer scheidet sich ab.'},
-  {id:'al-br',lvl:3,m:'Al',mP:'Al3+',o:'Br2',oP:'Br-',salt:'AlBr3',distract:['Br','Al+','AlBr'],text:'Aluminium und Brom reagieren unter Funkensprühen zu Aluminiumbromid.'},
-  {id:'fe-o',lvl:3,m:'Fe',mP:'Fe3+',o:'O2',oP:'O2-',salt:'Fe2O3',distract:['Fe2+','O','FeO'],text:'Beim Rosten reagiert Eisen (vereinfacht) mit Sauerstoff zu Eisen(III)-oxid.'},
-  {id:'mg-fe',lvl:3,m:'Mg',mP:'Mg2+',o:'Fe3+',oP:'Fe',distract:['Fe2+','Mg+'],text:'Magnesiumpulver wird in Eisen(III)-chlorid-Lösung gegeben. Es scheidet sich Eisen ab.'},
-  {id:'al-ag',lvl:3,m:'Al',mP:'Al3+',o:'Ag+',oP:'Ag',distract:['Ag2+','Al2+'],text:'Aluminium in Silbernitrat-Lösung: Es bilden sich Aluminium-Ionen, und Silber scheidet sich ab.'},
-  {id:'al-zn',lvl:3,m:'Al',mP:'Al3+',o:'Zn2+',oP:'Zn',distract:['Zn+','Al+'],text:'Aluminium verdrängt Zink aus einer Zinksulfat-Lösung.'}
+  {id:'al-cl',lvl:3,m:'Al',mP:'Al3+',o:'Cl2',oP:'Cl-',salt:'AlCl3',distract:['Cl','Al2+','AlCl2'],text:'Aluminiumfolie#oR glüht in Chlorgas#rR auf. Es entsteht Aluminium#oP|chlorid#rP.'},
+  {id:'al-o',lvl:3,m:'Al',mP:'Al3+',o:'O2',oP:'O2-',salt:'Al2O3',distract:['O','O-','AlO'],text:'Aluminium#oR überzieht sich mit dem Sauerstoff#rR der Luft#ro sofort mit einer dünnen, schützenden Schicht aus Aluminium#oP|oxid#rP.'},
+  {id:'fe-cl',lvl:3,m:'Fe',mP:'Fe3+',o:'Cl2',oP:'Cl-',salt:'FeCl3',distract:['Fe2+','Cl','FeCl2'],text:'Glühende Eisenwolle#oR reagiert mit Chlorgas#rR. Es entsteht Eisen(III)-#oP|chlorid#rP.'},
+  {id:'al-cu',lvl:3,m:'Al',mP:'Al3+',o:'Cu2+',oP:'Cu',distract:['Cu+','Al+'],text:'Aluminiumfolie#oR in Kupfer(II)-#rR|chlorid-Lösung#z löst sich auf, und Aluminium-Ionen#oP gehen in Lösung. Rotbraunes#ro Kupfer#rP scheidet sich ab.'},
+  {id:'al-br',lvl:3,m:'Al',mP:'Al3+',o:'Br2',oP:'Br-',salt:'AlBr3',distract:['Br','Al+','AlBr'],text:'Aluminium#oR und Brom#rR reagieren unter Funkensprühen zu Aluminium#oP|bromid#rP.'},
+  {id:'fe-o',lvl:3,m:'Fe',mP:'Fe3+',o:'O2',oP:'O2-',salt:'Fe2O3',distract:['Fe2+','O','FeO'],text:'Beim Rosten#f reagiert Eisen#oR (vereinfacht) mit Sauerstoff#rR zu Eisen(III)-#oP|oxid#rP.'},
+  {id:'mg-fe',lvl:3,m:'Mg',mP:'Mg2+',o:'Fe3+',oP:'Fe',distract:['Fe2+','Mg+'],text:'Magnesiumpulver#oR wird in Eisen(III)-#rR|chlorid-Lösung#z gegeben. Es scheidet sich Eisen#rP ab, und Magnesium-Ionen#oP gehen in Lösung.'},
+  {id:'al-ag',lvl:3,m:'Al',mP:'Al3+',o:'Ag+',oP:'Ag',distract:['Ag2+','Al2+'],text:'Aluminium#oR in Silber#rR|nitrat-Lösung#z: Es bilden sich Aluminium-Ionen#oP, und Silber#rP scheidet sich ab.'},
+  {id:'al-zn',lvl:3,m:'Al',mP:'Al3+',o:'Zn2+',oP:'Zn',distract:['Zn+','Al+'],text:'Aluminium#oR verdrängt Zink#rP aus einer Zink#rR|sulfat-Lösung#z. Dabei entstehen Aluminium-Ionen#oP.'}
 ];
 </script>
 
@@ -376,7 +401,7 @@ const LEVELS={
       3:{name:'Stufe 3',title:'Gemischt',desc:'Sauer oder basisch gemischt. Du baust die Teilgleichungen selbst und wählst die passenden Ausgleichsteilchen.'},
       4:{name:'Stufe 4',title:'Profi',desc:'Nichts ist vorgegeben: Du erkennst die Redoxpaare aus dem Text und baust alles selbst – mit Fallen im Vorrat.'}}
 };
-const TEST_LEN=5,MAXC=30,HS_KEY='redox-werkstatt-hs-v2';
+const TEST_LEN=5,MAXC=30,HS_KEY='redox-werkstatt-hs-v3';
 const STEP_MAX={9:{1:40,2:20,3:40},10:{0:20,1:30,2:10,3:40}};
 let S={screen:'start',mode:'learn',grade:9,level:1,proton:'H3O'};
 try{const sv=localStorage.getItem('redox-werkstatt-proton');if(sv==='H'||sv==='H3O') S.proton=sv;}catch(e){}
@@ -387,6 +412,68 @@ const L4DIS={'mn-fe':['MnO2','Mn','Fe'],'mn-ox':['MnO2','CO','CO3^2-'],'mn-h2o2'
  'cu-no3':['NO2','N2','Cu+'],'h2o2-i':['O2','IO3^-','I'],'mn-so3':['MnO2','S','SO2'],'mn-so3-b':['Mn2+','S','SO2'],'cl-dis':['Cl','ClO3^-','HCl'],
  'fe-oh':['Fe2O3','H2O2','Fe'],'mn-h2o2-b':['Mn2+','H2O','H2'],'mn-i-b':['Mn2+','I2','IO4^-'],'clo-i':['Cl2','IO3^-','ClO2^-']};
 const P4=()=>S.grade===10&&S.level===4;
+const CN={A:'Blau',B:'Orange'};
+function tokens(text){
+  const out=[];
+  text.split(' ').forEach((word,wi)=>{const parts=word.split('|');parts.forEach((part,pi)=>{
+    const m=part.match(/^([(„"]*)(.*?)(?:#([orbzf])([RPo])?)?([.,;:!?)“"]*)$/);
+    out.push({i:out.length,pre:m[1],w:m[2],tag:m[3]||null,role:m[4]||null,post:m[5],wi,split:parts.length>1,first:pi===0});});});
+  return out;
+}
+function dispTok(T,t){
+  if(!t) return '?';
+  let w=t.w==='Mangan(II)-'?'Mangan(II)-Ionen':t.w;
+  if(t.split) w=w.replace(/-$/,'')+' (in '+T.filter(x=>x.wi===t.wi).map(x=>x.w).join('')+')';
+  return w;
+}
+function pairTok(T,k){const tg=k==='ox'?'o':'r';
+  return {R:T.find(t=>(t.tag===tg||t.tag==='b')&&t.role==='R'),P:T.find(t=>t.tag===tg&&t.role==='P')};}
+const SM={9:{'-1':20,1:30,2:10,3:40},10:{'-1':20,0:10,1:30,2:10,3:30}};
+const smax=st=>SM[S.grade][st];
+function evalMarks(){
+  const T=tokens(S.rx.text),ks=[],msgs=[],brief=[];let ok=true;
+  ['A','B'].forEach(c=>{
+    const sel=T.filter(t=>S.marks[t.i]===c&&t.tag!=='f');
+    let m=null,k=null;
+    const inv=sel.find(t=>!t.tag),zs=sel.find(t=>t.tag==='z');
+    if(inv) m=`„${inv.w}“ gehört zu keinem Redoxpaar. Markiere den Stoff, der umgesetzt wird, und den Stoff, der daraus entsteht.`;
+    else if(zs) m=`„${zs.w}“ steht für Ionen, die nur zuschauen: Sie werden weder oxidiert noch reduziert.`;
+    else{
+      const pairs=[...new Set(sel.filter(t=>t.tag==='o'||t.tag==='r').map(t=>t.tag==='o'?'ox':'red'))];
+      if(pairs.length>1){
+        const salt=sel.some(a=>a.split&&sel.some(b=>b!==a&&b.wi===a.wi&&b.tag!==a.tag));
+        m=salt?'In einem Salznamen stecken zwei verschiedene Ionen. Metall-Ion und Nichtmetall-Ion gehören zu verschiedenen Redoxpaaren: Markiere die beiden Wortteile getrennt.'
+          :`In ${CN[c]} stecken Stoffe aus beiden Redoxpaaren. Ein Paar besteht aus einem Ausgangsstoff und dem Stoff, der daraus entsteht.`;
+      }else if(!pairs.length) m=`Bei ${CN[c]} fehlt noch das Produkt: Was entsteht aus diesem Stoff?`;
+      else{
+        k=pairs[0];const tg=k==='ox'?'o':'r';
+        if(ks.includes(k)){m=`${CN.A} und ${CN.B} markieren dasselbe Redoxpaar. Suche das zweite Paar.`;k=null;}
+        else if(!sel.some(t=>(t.tag===tg||t.tag==='b')&&t.role==='R')) m=`Bei ${CN[c]} fehlt noch der Ausgangsstoff: Aus welchem Stoff entsteht das?`;
+        else if(!sel.some(t=>t.tag===tg&&t.role==='P')) m=`Bei ${CN[c]} fehlt noch das Produkt: Was entsteht aus diesem Stoff?`;
+      }
+    }
+    ks.push(k);
+    if(m){ok=false;msgs.push(`<p><b>${CN[c]}:</b> ${m}</p>`);}
+    brief.push(`<p><b>${CN[c]}:</b> ${m?'stimmt noch nicht.':'stimmt.'}</p>`);
+  });
+  if(ok) S.pairOrder=ks;
+  return {ok,msgs:msgs.join(''),brief:brief.join('')};
+}
+function autoMark(){
+  const T=tokens(S.rx.text),used={};S.marks={};
+  S.pairOrder.forEach((k,ci)=>{const c=ci?'B':'A',tg=k==='ox'?'o':'r';
+    const r=T.find(t=>!used[t.i]&&(t.tag===tg||t.tag==='b')&&t.role==='R'),p=T.find(t=>!used[t.i]&&t.tag===tg&&t.role==='P');
+    [r,p].forEach(t=>{if(t){used[t.i]=1;S.marks[t.i]=c;}});});
+}
+function markHints(){
+  const T=tokens(S.rx.text),pt=pairTok(T,S.pairOrder[0]),g9=S.grade===9;
+  return [g9?'Suche die zwei Stoffe, die eingesetzt werden, und dann, was aus jedem davon entsteht. Beide Stoffe eines Paares enthalten dasselbe Element, zum Beispiel Magnesium und Magnesium-Ionen.'
+            :'Suche zuerst die zwei Stoffe, die eingesetzt werden. Suche dann, was aus jedem davon entsteht. Beide Stoffe eines Paares enthalten dasselbe Element, zum Beispiel Mangan in „Permanganat“ und „Mangan(II)-Ionen“.',
+          g9?'In einem Salznamen stecken zwei Ionen: Der Metall-Teil (z. B. „Natrium“ in Natriumchlorid) und der Nichtmetall-Teil („chlorid“) gehören zu verschiedenen Paaren. Tippe die Wortteile einzeln an. Teile wie „sulfat-Lösung“ oder „nitrat-Lösung“ reagieren nicht mit.'
+            :'Beobachtungen wie „entfärbt“ darfst du mitmarkieren. Entscheidend sind die Stoffnamen. Lösungsmittel wie „Natronlauge“ und Zuschauer-Ionen wie „sulfat“ gehören zu keinem Paar.',
+          `Ein Paar lautet: „${dispTok(T,pt.R)}“ und „${dispTok(T,pt.P)}“.`];
+}
+
 function elOf(sp){const els=Object.keys(parseSp(sp).el);return els.find(e=>e!=='O'&&e!=='H')||(els.includes('O')?'O':els[0]);}
 const TITLES={'zn-cu':'Zink in Kupfersulfat-Lösung','fe-cu':'Eisennagel in Kupfersulfat-Lösung','mg-zn':'Magnesium in Zinksulfat-Lösung','mg-cl':'Magnesium verbrennt in Chlor','zn-s':'Zink und Schwefel','fe-s':'Eisen und Schwefel','na-cl':'Natrium verbrennt in Chlor','cu-ag':'Der Silberbaum',
  'mg-o':'Magnesium verbrennt','ca-o':'Calcium an der Luft','k-br':'Kalium und Brom','li-o':'Lithium und Sauerstoff','zn-ag':'Zink in Silbernitrat-Lösung','mg-ag':'Magnesium in Silbernitrat-Lösung','na-s':'Natrium und Schwefel','ca-cl':'Calcium und Chlor',
@@ -418,8 +505,8 @@ function loadTask(){
   if(S.mode==='learn'&&S.idx>=S.tasks.length){S.tasks=shuffle(S.tasks);S.idx=0;}
   const rx=S.tasks[S.idx],g10=S.grade===10;
   S.rx=rx;S.sol=g10?solve10(rx,PK()):solve(rx);
-  S.step=g10?0:1;S.done={};S.att={0:0,1:0,2:0,3:0};S.hint={0:0,1:0,2:0,3:0};S.fb={};S.revealed={};S.taskPts=0;
-  S.fac={fo:'',fr:''};S.missing={};S.gForm='ion';S.pen={0:0,1:0,2:0,3:0};
+  S.step=-1;S.done={};S.att={'-1':0,0:0,1:0,2:0,3:0};S.hint={'-1':0,0:0,1:0,2:0,3:0};S.marks={};S.markColor='A';S.fb={};S.revealed={};S.taskPts=0;
+  S.fac={fo:'',fr:''};S.missing={};S.gForm='ion';S.pen={'-1':0,0:0,1:0,2:0,3:0};
   S.oxsel={'ox-R':'','ox-P':'','red-R':'','red-P':''};S.pairOrder=shuffle(['ox','red']);
   S.pairSel={'0R':null,'0P':null,'1R':null,'1P':null};S.activeSlot='0R';
   if(g10&&S.level===4){S.oxsel={'0R':'','0P':'','1R':'','1P':''};S.pool0=shuffle(uniq([rx.ox.R,rx.ox.P,rx.red.R,rx.red.P,...(L4DIS[rx.id]||[])]));}
@@ -530,10 +617,10 @@ function evalStep0(){
   const {rx,sol}=S,msgs=[],brief=[];let ok=true;
   S.pairOrder.forEach((k,i)=>{const p=rx[k];let rowOk=true;
     for(const side of ['R','P']){
-      if(parseInt(S.oxsel[k+'-'+side],10)!==sol.oxn[k+side]){rowOk=false;msgs.push(`<p><b>Redoxpaar ${i+1}:</b> Die Oxidationszahl von ${p.x} in ${fmt(p[side])} stimmt nicht.</p>`);}
+      if(parseInt(S.oxsel[k+'-'+side],10)!==sol.oxn[k+side]){rowOk=false;msgs.push(`<p><b>${i?'Oranges':'Blaues'} Paar:</b> Die Oxidationszahl von ${p.x} in ${fmt(p[side])} stimmt nicht.</p>`);}
     }
     if(!rowOk) ok=false;
-    brief.push(`<p><b>Redoxpaar ${i+1}:</b> ${rowOk?'stimmt.':'stimmt noch nicht.'}</p>`);
+    brief.push(`<p><b>${i?'Oranges':'Blaues'} Paar:</b> ${rowOk?'stimmt.':'stimmt noch nicht.'}</p>`);
   });
   return {ok,msgs:msgs.join('')+'<p>Merke: Sauerstoff hat meist −II, Wasserstoff +I. Die Summe ergibt die Ladung des Teilchens.</p>',brief:brief.join('')};
 }
@@ -541,8 +628,9 @@ function evalStep0L4(){
   const rx=S.rx,sol=S.sol,msgs=[],brief=[],ks=[];let ok=true;
   [0,1].forEach(i=>{
     const R=S.pairSel[i+'R'],P=S.pairSel[i+'P'];let m=null;
-    let k=['ox','red'].find(q=>rx[q].R===R&&rx[q].P===P);
-    if(k&&ks.includes(k)){m='Beide Zeilen beschreiben dasselbe Redoxpaar.';k=null;}
+    const k0=S.pairOrder[i],k1=k0==='ox'?'red':'ox',match=q=>rx[q].R===R&&rx[q].P===P;
+    let k=match(k0)?k0:null;
+    if(!k&&match(k1)) m=`Diese Teilchen gehören zum Paar, das du ${i?'blau':'orange'} markiert hast. Hier ist das ${i?'orange':'blaue'} Paar gefragt.`;
     if(!k&&!m){
       if(['ox','red'].some(q=>rx[q].R===P&&rx[q].P===R)) m='Ausgangsstoff und Produkt sind vertauscht.';
       else if(!['ox','red'].some(q=>rx[q].R===R)) m=`${fmt(R)} ist hier kein Ausgangsstoff. Welche Stoffe werden laut Text eingesetzt?`;
@@ -551,15 +639,15 @@ function evalStep0L4(){
     if(!m) for(const s of ['R','P']) if(parseInt(S.oxsel[i+s],10)!==sol.oxn[k+s])
       m=(m?m+' ':'')+`Die Oxidationszahl von ${rx[k].x} in ${fmt(s==='R'?R:P)} stimmt nicht.`;
     ks.push(k);
-    if(m){ok=false;msgs.push(`<p><b>Redoxpaar ${i+1}:</b> ${m}</p>`);}
-    brief.push(`<p><b>Redoxpaar ${i+1}:</b> ${m?'stimmt noch nicht.':'stimmt.'}</p>`);
+    const lab=i?'Oranges Paar':'Blaues Paar';
+    if(m){ok=false;msgs.push(`<p><b>${lab}:</b> ${m}</p>`);}
+    brief.push(`<p><b>${lab}:</b> ${m?'stimmt noch nicht.':'stimmt.'}</p>`);
   });
-  if(ok) S.pairOrder=ks;
   return {ok,msgs:msgs.join(''),brief:brief.join('')};
 }
 function oxExplain(){
   return S.pairOrder.map((k,i)=>{const p=S.rx[k],a=S.sol.oxn[k+'R'],b=S.sol.oxn[k+'P'];
-    return `<p>Redoxpaar ${i+1}: ${p.x} von ${roman(a)} auf ${roman(b)}, die Oxidationszahl ${b>a?'steigt. Das ist eine Oxidation.':'sinkt. Das ist eine Reduktion.'}</p>`;}).join('');
+    return `<p>${i?'Oranges':'Blaues'} Paar: ${p.x} von ${roman(a)} auf ${roman(b)}, die Oxidationszahl ${b>a?'steigt. Das ist eine Oxidation.':'sinkt. Das ist eine Reduktion.'}</p>`;}).join('');
 }
 function analyzeTeil10(E,label){
   const rx=S.rx,sol=S.sol,kL=keysOf(E.L),kR=keysOf(E.R),all=[...kL,...kR];
@@ -635,7 +723,10 @@ function evalStep2(){
 function locked(id){return id==='g'?(S.step!==3||S.done[3]):(S.step!==1);}
 function incomplete(step){
   const miss={};let msg='';
-  if(step===0){
+  if(step===-1){
+    ['A','B'].forEach(c=>{if(!Object.values(S.marks).includes(c)) miss['col-'+c]=true;});
+    if(Object.keys(miss).length) msg='Markiere beide Redoxpaare im Text, eines blau und eines orange (gelb markiert: fehlende Farbe).';
+  }else if(step===0){
     let slots=0;
     if(P4()) for(const k of Object.keys(S.pairSel)) if(!S.pairSel[k]){miss['slot-'+k]=true;slots++;}
     let ox=0;for(const k of Object.keys(S.oxsel)) if(S.oxsel[k]===''){miss['oxs-'+k]=true;ox++;}
@@ -657,7 +748,7 @@ function incomplete(step){
   return msg?{miss,msg}:null;
 }
 function check(step){
-  const learn=S.mode==='learn',maxP=STEP_MAX[S.grade][step],inc=incomplete(step);
+  const learn=S.mode==='learn',maxP=smax(step),inc=incomplete(step);
   S.missing=inc?inc.miss:{};
   if(inc){
     let note='';
@@ -666,7 +757,8 @@ function check(step){
   }
   S.att[step]++;
   let ok=false,html='';S._partial1=0;
-  if(step===0){const res=P4()?evalStep0L4():evalStep0();ok=res.ok;if(!ok) html=learn?res.msgs:res.brief;}
+  if(step===-1){const res=evalMarks();ok=res.ok;if(!ok) html=learn?res.msgs:res.brief;}
+  else if(step===0){const res=P4()?evalStep0L4():evalStep0();ok=res.ok;if(!ok) html=learn?res.msgs:res.brief;}
   else if(step===1){
     const res=evalStep1();ok=res.ok;
     if(!ok) html=res.r.map((x,i)=>`<p><b>Teilgleichung ${i+1}:</b> ${x.ok?'stimmt.':(learn?x.msg:'stimmt noch nicht.')}</p>`).join('');
@@ -680,6 +772,7 @@ function check(step){
     S.fb[step]={type:'ok',html:`<p><b>${msg}</b></p>`+(step===2?html:'')+(step===0&&learn?oxExplain():'')};
     advance(step);
   }else if(!learn&&S.att[step]>=2){
+    if(step===-1) autoMark();
     const p=step===1?Math.max(0,S._partial1*10-S.pen[1]):0;
     S.points+=p;S.taskPts+=p;
     S.fb[step]={type:'bad',html:html+`<p><b>Kein Versuch mehr.</b> ${p?pts(p)+' Punkte für die richtige Teilgleichung. ':''}Die Lösung steht unten.</p>`};
@@ -688,7 +781,8 @@ function check(step){
   render();
 }
 function advance(step){
-  S.done[step]=true;S.step=step+1;
+  S.done[step]=true;S.step=(step===-1&&S.grade===9)?1:step+1;
+  if(step===-1) S.activeSlot='0R';
   if(step===0) S.active={id:'t0',side:'L'};
   if(step===1) setTimeout(()=>{const el=document.getElementById('fo');if(el) el.focus();},30);
   if(step===2) S.active={id:'g',side:'L'};
@@ -697,7 +791,8 @@ function showHint(step){
   const {rx,sol}=S;let list;
   const h2=[`Die Oxidation gibt ${sol.nOx} e<sup>−</sup> ab, die Reduktion nimmt ${sol.nRed} e<sup>−</sup> auf. Beide Zahlen müssen gleich groß werden.`,
             `Das kleinste gemeinsame Vielfache von ${sol.nOx} und ${sol.nRed} ist ${sol.L}.`];
-  if(S.grade===9){
+  if(step===-1) list=markHints();
+  else if(S.grade===9){
     list={1:[`Metallatome geben ihre Außenelektronen ab und werden zu positiv geladenen Ionen. Nichtmetalle und Metall-Ionen nehmen Elektronen auf.`,
              `Die Ionenladung verrät dir die Zahl der Elektronen. Hauptgruppen-Elemente: Schau ins Periodensystem. Bei Eisen und Kupfer steht die Ladung im Namen, z. B. Eisen(III).`,
              `Gerüst: ${fmt(rx.m)} → ${fmt(rx.mP)} + ? e<sup>−</sup> und ${fmt(rx.o)} + ? e<sup>−</sup> → ${fmt(rx.oP)}. Denk an die Atombilanz!`],
@@ -720,6 +815,7 @@ function showHint(step){
   render();
 }
 function reveal(step){
+  if(step===-1) autoMark();
   S.revealed[step]=true;
   S.fb[step]={type:'info',html:'<p>Hier ist die Lösung. Vergleiche sie mit deinem Versuch, bevor du weitermachst.</p>'};
   advance(step);render();
@@ -730,7 +826,8 @@ function eqHTML(E){
 }
 function solHTML(step){
   const s=S.sol;
-  if(step===0) return S.pairOrder.map((k,i)=>{const p=S.rx[k];return `<p>Redoxpaar ${i+1}: ${p.x} in ${fmt(p.R)}: ${roman(s.oxn[k+'R'])} → ${p.x} in ${fmt(p.P)}: ${roman(s.oxn[k+'P'])}</p>`;}).join('');
+  if(step===-1){const T=tokens(S.rx.text);return S.pairOrder.map((k,i)=>{const pt=pairTok(T,k);return `<p><span class="pchip ${i?'pb':'pa'}">${i?CN.B:CN.A}</span> ${dispTok(T,pt.R)} ⟶ ${dispTok(T,pt.P)}</p>`;}).join('');}
+  if(step===0) return S.pairOrder.map((k,i)=>{const p=S.rx[k];return `<p>${i?'Oranges':'Blaues'} Paar: ${p.x} in ${fmt(p.R)}: ${roman(s.oxn[k+'R'])} → ${p.x} in ${fmt(p.P)}: ${roman(s.oxn[k+'P'])}</p>`;}).join('');
   if(step===1) return `<p>Oxidation: ${eqHTML(s.ox)}</p><p>Reduktion: ${eqHTML(s.red)}</p>`;
   if(step===2) return `<p>Oxidation × ${s.fo}, Reduktion × ${s.fr}, dann werden je ${s.L} e<sup>−</sup> übertragen.</p>`;
   return s.forms.map(f=>`<p>${eqHTML(f)}</p>`).join('<p>oder zusammengefasst</p>');
@@ -843,8 +940,8 @@ function stepFooter(step){
   return h;
 }
 function stepHead(step,title,intro){
-  const cls=S.done[step]?'solved':(S.step<step?'later':''),disp=step+(S.grade===10?1:0);
-  return `<section class="step ${cls}"><h2><span class="n">${S.done[step]?'✓':disp}</span>${title}</h2>${S.step>=step?`<p class="intro">${intro}</p>`:''}`;
+  const cls=S.done[step]?'solved':(S.step<step?'later':''),disp=S.grade===10?step+2:(step===-1?1:step+1);
+  return `<section class="step ${cls}"><h2><span class="n">${S.done[step]?'✓':disp}</span>${title}</h2>${S.step>=step&&intro?`<p class="intro">${intro}</p>`:''}`;
 }
 function sheetHTML(){
   const items=S.grade===9?[
@@ -863,28 +960,39 @@ function taskHTML(){
   const stats=learn?`<div class="stats"><span>Aufgabe <b>${S.idx+1}</b></span></div>`
     :`<div class="stats"><span>Aufgabe <b>${S.idx+1}</b> von ${S.tasks.length}</span><span><b>${S.points}</b> Punkte</span><span id="timer">${clock(Date.now()-S.t0)}</span></div>`;
   let h=`<header class="bar"><button class="link" data-act="home">Zur Übersicht</button><span class="where">${learn?'Lernen':'Challenge'}, Klasse ${S.grade}, ${LEVELS[S.grade][S.level].name}</span>${stats}</header>`;
-  const showF=g10?S.level<4:S.level===1;
+  const showF=(g10?S.level<4:S.level===1)&&S.done[-1];
   const fl=g10?[uniq([rx.red.R,rx.ox.R]),uniq([rx.red.P,rx.ox.P])]:[[rx.m,rx.o],[rx.mP,rx.oP]];
   h+=`<section class="taskcard" aria-label="Aufgabe">
     <div class="tc-top"><span class="tc-label">Aufgabe ${S.idx+1}${learn?'':' von '+S.tasks.length}</span>${g10?`<span class="medium">${rx.med==='acid'?'Saure Lösung':'Basische Lösung'}</span>`:''}</div>
     <h2 class="tc-title">${TITLES[rx.id]||''}</h2>
     ${showF?`<p class="tc-formula">${fl[0].map(fmt).join(' + ')} <span class="tc-arrow">⟶</span> ${fl[1].map(fmt).join(' + ')}</p>`:''}
-    <p class="tc-text">${rx.text}</p></section>`;
+    ${S.step===-1?`<p class="tc-task"><b>Deine Aufgabe:</b> Markiere im Text ein Redoxpaar blau und das andere orange – jeweils den Stoff, der umgesetzt wird, und den Stoff, der daraus entsteht.</p>`:''}
+    ${S.step===-1?`<div class="mtools" role="group" aria-label="Markierfarbe">
+      <button class="mcol A ${S.missing['col-A']?'missing':''}" data-act="mcol" data-v="A" aria-pressed="${S.markColor==='A'}"><span class="dot"></span>Paar blau</button>
+      <button class="mcol B ${S.missing['col-B']?'missing':''}" data-act="mcol" data-v="B" aria-pressed="${S.markColor==='B'}"><span class="dot"></span>Paar orange</button>
+      <span class="mhint">Farbe wählen, dann Wörter antippen. Nochmal tippen entfernt die Markierung.${S.grade===9?' Wortteile mit Trennlinie lassen sich einzeln markieren.':''}</span></div>`:''}
+    <p class="tc-text">${(()=>{const T=tokens(rx.text),cl=S.step===-1,g={};T.forEach(t=>(g[t.wi]=g[t.wi]||[]).push(t));
+      return Object.values(g).map(ws=>ws.map(t=>{const c=S.marks[t.i];return `${t.pre}<span class="w ${c?'m-'+c:''} ${cl&&t.split&&!t.first?'pj':''}"${cl?` role="button" tabindex="0" data-act="mark" data-w="${t.i}"`:''}>${t.w}</span>${t.post}`;}).join('')).join(' ');})()}</p></section>`;
   if(learn) h+=sheetHTML();
+  {
+    h+=stepHead(-1,'Redoxpaare im Text markieren','');
+    h+=stepFooter(-1)+'</section>';
+    if(S.step<0) return h;
+  }
   if(g10){
     if(P4()){
-      h+=stepHead(0,'Redoxpaare und Oxidationszahlen bestimmen','Welche Teilchen reagieren, und was entsteht jeweils daraus? Tippe auf ein Feld und dann auf ein Teilchen. Bestimme dann die Oxidationszahl des angegebenen Elements.');
+      h+=stepHead(0,'Redoxpaare und Oxidationszahlen bestimmen','Welche Teilchen stecken hinter deinen markierten Paaren? Tippe auf ein Feld und dann auf ein Teilchen. Bestimme dann die Oxidationszahl des angegebenen Elements.');
       const lk=S.step!==0;
       const slot=(k,ph)=>{const sp=S.pairSel[k],act=!lk&&S.activeSlot===k;
         return `<button class="slot ${act?'active':''} ${sp?'filled':''} ${S.missing['slot-'+k]?'missing':''}" data-act="slot" data-k="${k}" ${lk?'disabled':''} aria-label="${ph}${act?', ausgewählt':''}">${sp?fmt(sp):ph}</button>`;};
       const el=k=>`<span class="oxlab">${S.pairSel[k]?elOf(S.pairSel[k]):'?'}:</span>`;
-      h+='<div class="oxgrid">'+[0,1].map(i=>`<div class="oxrow"><span class="t">Redoxpaar ${i+1}</span><span class="pair">${slot(i+'R','Ausgangsstoff')} ${el(i+'R')} ${oxSelHTML(i+'R',lk)}</span><span class="ar" aria-hidden="true">⟶</span><span class="pair">${slot(i+'P','Produkt')} ${el(i+'P')} ${oxSelHTML(i+'P',lk)}</span></div>`).join('')+'</div>';
+      h+='<div class="oxgrid">'+[0,1].map(i=>`<div class="oxrow ${i?'pb':'pa'}"><span class="t">${i?'Oranges':'Blaues'} Paar</span><span class="pair">${slot(i+'R','Ausgangsstoff')} ${el(i+'R')} ${oxSelHTML(i+'R',lk)}</span><span class="ar" aria-hidden="true">⟶</span><span class="pair">${slot(i+'P','Produkt')} ${el(i+'P')} ${oxSelHTML(i+'P',lk)}</span></div>`).join('')+'</div>';
       if(!lk) h+=`<div class="pool">${S.pool0.map(sp=>`<button class="chip" data-act="pick" data-sp="${sp}" aria-label="Teilchen einsetzen">${fmt(sp)}</button>`).join('')}</div>`;
       h+=stepFooter(0)+'</section>';
     }else{
     h+=stepHead(0,'Oxidationszahlen bestimmen','Bestimme für jedes Redoxpaar die Oxidationszahl des Elements, das sich verändert.');
     h+='<div class="oxgrid">'+S.pairOrder.map((k,i)=>{const p=rx[k],lk=S.step!==0;
-      return `<div class="oxrow"><span class="t">Redoxpaar ${i+1}</span><span class="pair"><span class="x">${p.x}</span> in <span class="sp">${fmt(p.R)}</span> ${oxSelHTML(k+'-R',lk)}</span><span class="ar" aria-hidden="true">⟶</span><span class="pair"><span class="x">${p.x}</span> in <span class="sp">${fmt(p.P)}</span> ${oxSelHTML(k+'-P',lk)}</span></div>`;}).join('')+'</div>';
+      return `<div class="oxrow ${i?'pb':'pa'}"><span class="t">${i?'Oranges':'Blaues'} Paar</span><span class="pair"><span class="x">${p.x}</span> in <span class="sp">${fmt(p.R)}</span> ${oxSelHTML(k+'-R',lk)}</span><span class="ar" aria-hidden="true">⟶</span><span class="pair"><span class="x">${p.x}</span> in <span class="sp">${fmt(p.P)}</span> ${oxSelHTML(k+'-P',lk)}</span></div>`;}).join('')+'</div>';
     h+=stepFooter(0)+'</section>';
     }
   }
@@ -950,6 +1058,13 @@ $app.addEventListener('click',e=>{
   else if(a==='resetask'){S.confirmReset=true;S.resetDone=false;render();}
   else if(a==='resetno'){S.confirmReset=false;render();}
   else if(a==='resetyes'){try{localStorage.removeItem(HS_KEY);}catch(err){}S.confirmReset=false;S.resetDone=true;render();}
+  else if(a==='mcol'){S.markColor=v;delete S.missing['col-'+v];render();}
+  else if(a==='mark'){
+    if(S.step!==-1) return;const i=el.dataset.w;
+    if(S.marks[i]===S.markColor) delete S.marks[i]; else S.marks[i]=S.markColor;
+    delete S.missing['col-'+S.markColor];render();
+    const again=$app.querySelector(`.w[data-w="${i}"]`);if(again&&document.activeElement===document.body&&e.detail===0) again.focus();
+  }
   else if(a==='slot'){if(S.step!==0) return;S.activeSlot=el.dataset.k;render();}
   else if(a==='pick'){
     if(S.step!==0) return;
@@ -1010,6 +1125,8 @@ $app.addEventListener('change',e=>{
   }
 });
 $app.addEventListener('keydown',e=>{
+  const wd=e.target.closest('.w[data-act]');
+  if(wd&&(e.key==='Enter'||e.key===' ')){e.preventDefault();wd.click();const again=$app.querySelector(`.w[data-w="${wd.dataset.w}"]`);if(again) again.focus();return;}
   const el=e.target.closest('.side[data-act]');
   if(el&&e.target===el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();S.active={id:el.dataset.id,side:el.dataset.side};render();
     const again=$app.querySelector(`.side[data-id="${el.dataset.id}"][data-side="${el.dataset.side}"]`);if(again) again.focus();}
